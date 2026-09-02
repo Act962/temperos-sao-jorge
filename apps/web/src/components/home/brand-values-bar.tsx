@@ -1,41 +1,73 @@
-import { BookOpen, CircleCheck, Home, Sprout } from "lucide-react";
+import { BookOpen, Leaf, ShieldCheck, UtensilsCrossed } from "lucide-react";
 import type { ComponentType } from "react";
 import { Reveal } from "@/components/ui/reveal";
+import { PRODUCT_FAMILIES, PRODUCTS } from "@/data/products";
+import { TIMELINE } from "@/data/timeline";
 
 interface BrandValue {
 	readonly icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-	readonly lines: readonly [string, string];
+	readonly title: string;
+	readonly text: string;
 }
 
+const foundingYear = TIMELINE[0]?.year ?? "1980";
+
+/**
+ * As quatro promessas de fechamento da home.
+ *
+ * Os números saem do próprio catálogo, então não envelhecem quando um produto
+ * entra ou sai. Antes eram quatro rótulos em caixa-alta de 12 px numa faixa
+ * fininha logo acima do rodapé — a promessa central da marca com cara de letra
+ * miúda.
+ */
 const VALUES: readonly BrandValue[] = [
-	{ icon: Sprout, lines: ["Ingredientes", "selecionados"] },
-	{ icon: CircleCheck, lines: ["Qualidade que", "você confia"] },
-	{ icon: BookOpen, lines: ["Tradição que", "atravessa gerações"] },
-	{ icon: Home, lines: ["Sabor que faz", "parte da sua história"] },
+	{
+		icon: Leaf,
+		title: "Ingredientes selecionados",
+		text: "Ervas, grãos e especiarias escolhidos para chegar à sua cozinha com todo o sabor.",
+	},
+	{
+		icon: ShieldCheck,
+		title: "Qualidade que você confia",
+		text: "O mesmo padrão do sachê de tempero ao saco de 1 kg da linha institucional.",
+	},
+	{
+		icon: BookOpen,
+		title: `Tradição desde ${foundingYear}`,
+		text: "Quatro décadas de história de família, da primeira fábrica à mesa de todo o Brasil.",
+	},
+	{
+		icon: UtensilsCrossed,
+		title: "Variedade para o dia a dia",
+		text: `${PRODUCTS.length} produtos em ${PRODUCT_FAMILIES.length} famílias, do chá da noite ao tempero do almoço.`,
+	},
 ];
 
-/** Four brand promises closing the home page. */
+/** Faixa de fechamento da home, entre as receitas e o rodapé. */
 export function BrandValuesBar() {
 	return (
-		<div className="mt-19 border-brand/14 border-t bg-cream-sunken">
-			<Reveal className="shell grid grid-cols-1 gap-7 py-7.5 sm:grid-cols-2 lg:grid-cols-4">
-				{VALUES.map((value) => (
-					<div
-						key={value.lines.join(" ")}
-						className="flex items-center gap-3.5"
-					>
-						<value.icon
-							aria-hidden
-							className="size-6.5 shrink-0 text-brand-bright"
-						/>
-						<p className="font-sans font-semibold text-ink-soft text-xs uppercase leading-snug tracking-[0.1em]">
-							{value.lines[0]}
-							<br />
-							{value.lines[1]}
+		<section
+			aria-label="Compromissos da São Jorge Alimentos"
+			className="mt-20 border-brand/12 border-t bg-cream-sunken py-16 lg:py-20"
+		>
+			<ul className="shell grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-12">
+				{VALUES.map((value, index) => (
+					<Reveal as="li" key={value.title} delay={index * 90}>
+						<span
+							aria-hidden="true"
+							className="mb-5 flex size-12 items-center justify-center rounded-full bg-brand/8 text-brand"
+						>
+							<value.icon className="size-6" />
+						</span>
+						<h3 className="font-sans font-semibold text-[1.0625rem] text-ink leading-snug">
+							{value.title}
+						</h3>
+						<p className="mt-2 text-pretty font-sans text-[0.875rem] text-ink-muted leading-relaxed">
+							{value.text}
 						</p>
-					</div>
+					</Reveal>
 				))}
-			</Reveal>
-		</div>
+			</ul>
+		</section>
 	);
 }
