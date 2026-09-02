@@ -23,6 +23,7 @@
     "@trpc/tanstack-react-query": "^11.18.0",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "embla-carousel-react": "^8.6.0",
     "lucide-react": "catalog:",
     "next-themes": "catalog:",
     "react": "catalog:",
