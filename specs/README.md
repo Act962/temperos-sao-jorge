@@ -35,3 +35,4 @@ ao código.
 | [0002](0002-painel-de-produtos.md) | Painel de administração: produtos | implementada |
 | [0003](0003-edicao-de-receitas.md) | Painel de administração: receitas | implementada |
 | [0004](0004-imagens-no-r2.md) | Fotos em object storage (Cloudflare R2) | implementada |
+| [0005](0005-upload-de-imagens-no-painel.md) | Upload de imagens no painel | proposta |
