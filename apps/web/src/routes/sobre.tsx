@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AboutTimeline } from "@/components/about/about-timeline";
 import { ArchiveGallery } from "@/components/about/archive-gallery";
 import { PageHeader } from "@/components/ui/page-header";
+import { Eyebrow, SectionHeading } from "@/components/ui/section-heading";
 import { buildPageSeo } from "@/lib/seo";
 import { breadcrumbSchema, jsonLdScript } from "@/lib/structured-data";
 
@@ -60,10 +61,13 @@ function AboutPage() {
 					<ArchiveGallery />
 				</div>
 
-				<section aria-labelledby="linha-do-tempo" className="mt-20">
-					<h2 id="linha-do-tempo" className="sr-only">
-						Linha do tempo da São Jorge Alimentos
-					</h2>
+				<section aria-labelledby="linha-do-tempo" className="mt-24">
+					<header className="mb-12 text-center">
+						<Eyebrow className="mb-3">Nossa trajetória</Eyebrow>
+						<SectionHeading id="linha-do-tempo" className="text-[2.25rem]">
+							De 1980 até a sua mesa
+						</SectionHeading>
+					</header>
 					<AboutTimeline />
 				</section>
 			</div>

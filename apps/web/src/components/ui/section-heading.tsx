@@ -27,6 +27,8 @@ interface SectionHeadingProps {
 	className?: string;
 	accentClassName?: string;
 	as?: "h1" | "h2" | "h3";
+	/** Alvo de `aria-labelledby` quando a seção é rotulada por este título. */
+	id?: string;
 }
 
 /** Condensed uppercase display heading used across every section. */
@@ -36,9 +38,11 @@ export function SectionHeading({
 	className,
 	accentClassName,
 	as: Tag = "h2",
+	id,
 }: SectionHeadingProps) {
 	return (
 		<Tag
+			id={id}
 			className={cn(
 				"font-display font-extrabold text-[2.5rem] text-ink uppercase leading-[1.05] sm:text-[2.75rem]",
 				className,
