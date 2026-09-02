@@ -65,6 +65,30 @@
 }
 
 @layer utilities {
+	/*
+	 * Barra de rolagem discreta para superfícies escuras da marca. Só aparece
+	 * quando o conteúdo realmente não cabe — a nativa é clara, destoa do
+	 * vermelho e chama mais atenção que o próprio conteúdo.
+	 */
+	.scrollbar-brand {
+		scrollbar-width: thin;
+		scrollbar-color: color-mix(in srgb, var(--color-cream-fg) 38%, transparent)
+			transparent;
+	}
+
+	.scrollbar-brand::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	.scrollbar-brand::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.scrollbar-brand::-webkit-scrollbar-thumb {
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--color-cream-fg) 38%, transparent);
+	}
+
 	/* Container matching the canvas: 1240px content well with 36px gutters. */
 	.shell {
 		margin-inline: auto;

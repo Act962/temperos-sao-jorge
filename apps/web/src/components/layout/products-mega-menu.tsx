@@ -11,9 +11,15 @@ interface ProductsMegaMenuProps {
 }
 
 /**
- * Desktop-only products panel: families on the left, the hovered family's
- * products on the right. Hidden from assistive tech while closed so screen
- * readers never walk 105 invisible links.
+ * Painel de produtos, só no desktop: famílias à esquerda, produtos da família
+ * sob o cursor à direita. Fica inerte enquanto fechado para o leitor de tela
+ * não percorrer 105 links invisíveis.
+ *
+ * A lista de produtos não rola: rolagem dentro de um painel aberto por hover é
+ * ruim de operar, porque o painel fecha assim que o ponteiro escapa. O painel
+ * cresce até caber a maior família — 26 chás em duas colunas. O limite de
+ * altura abaixo é só rede de segurança para telas muito baixas, e aí a barra
+ * sai discreta em vez da nativa clara sobre o vermelho.
  */
 export function ProductsMegaMenu({ open, onNavigate }: ProductsMegaMenuProps) {
 	const [activeFamily, setActiveFamily] = useState(PRODUCT_FAMILIES[0].slug);
@@ -26,14 +32,14 @@ export function ProductsMegaMenu({ open, onNavigate }: ProductsMegaMenuProps) {
 		<div
 			inert={open ? undefined : true}
 			className={cn(
-				"absolute top-full left-1/2 z-80 w-[640px] -translate-x-1/2 pt-3.5 transition-[opacity,transform] duration-200",
+				"absolute top-full left-1/2 z-80 w-185 -translate-x-1/2 pt-3.5 transition-[opacity,transform] duration-200",
 				open
 					? "visible translate-y-0 opacity-100"
 					: "invisible -translate-y-2 opacity-0",
 			)}
 		>
-			<div className="relative grid grid-cols-[232px_1fr] overflow-hidden rounded-b-xl bg-brand shadow-[0_26px_60px_rgba(43,10,10,0.4)]">
-				<div className="bg-brand-dark py-2.5">
+			<div className="relative grid grid-cols-[15.5rem_1fr] overflow-hidden rounded-b-xl bg-brand shadow-[0_26px_60px_rgba(43,10,10,0.4)]">
+				<nav aria-label="Famílias de produtos" className="bg-brand-dark py-2.5">
 					{PRODUCT_FAMILIES.map((item) => {
 						const active = item.slug === family.slug;
 						return (
@@ -45,11 +51,19 @@ export function ProductsMegaMenu({ open, onNavigate }: ProductsMegaMenuProps) {
 								onFocus={() => setActiveFamily(item.slug)}
 								onClick={onNavigate}
 								className={cn(
-									"flex w-full items-center justify-between gap-2.5 px-[22px] py-3 text-left font-sans font-semibold text-cream-fg text-sm tracking-[0.02em] transition-colors",
+									"flex w-full items-center gap-2.5 px-5.5 py-2.5 text-left font-sans font-semibold text-cream-fg text-sm tracking-[0.02em] transition-colors",
 									active ? "bg-brand" : "hover:bg-brand/60",
 								)}
 							>
-								{item.name}
+								<span className="flex-1">{item.name}</span>
+								<span
+									className={cn(
+										"font-normal text-xs tabular-nums transition-opacity",
+										active ? "opacity-70" : "opacity-45",
+									)}
+								>
+									{item.count}
+								</span>
 								<ChevronRight
 									aria-hidden="true"
 									className={cn(
@@ -60,13 +74,13 @@ export function ProductsMegaMenu({ open, onNavigate }: ProductsMegaMenuProps) {
 							</Link>
 						);
 					})}
-				</div>
+				</nav>
 
-				<div className="px-6 pt-5 pb-[22px]">
-					<p className="mb-3.5 font-bold font-sans text-brand-rose text-xs uppercase tracking-[0.16em]">
+				<div className="flex flex-col px-7 pt-5 pb-5.5">
+					<p className="mb-4 font-bold font-sans text-brand-rose text-xs uppercase tracking-[0.16em]">
 						{family.name}
 					</p>
-					<ul className="grid max-h-[300px] grid-cols-2 gap-x-5 gap-y-1.5 overflow-auto">
+					<ul className="scrollbar-brand grid max-h-[min(58vh,27rem)] grid-cols-2 gap-x-7 overflow-y-auto">
 						{products.map((product) => (
 							<li key={product.slug}>
 								<Link
@@ -84,9 +98,9 @@ export function ProductsMegaMenu({ open, onNavigate }: ProductsMegaMenuProps) {
 						to="/produtos/$familia"
 						params={{ familia: family.slug }}
 						onClick={onNavigate}
-						className="mt-4 inline-flex rounded-[5px] bg-cream-fg px-[18px] py-2.5 font-sans font-semibold text-[0.8125rem] text-brand transition-colors hover:bg-white"
+						className="mt-5 inline-flex w-fit rounded-[5px] bg-cream-fg px-4.5 py-2.5 font-sans font-semibold text-[0.8125rem] text-brand transition-colors hover:bg-white"
 					>
-						Ver todos de {family.name}
+						Ver os {family.count} produtos
 					</Link>
 				</div>
 			</div>
