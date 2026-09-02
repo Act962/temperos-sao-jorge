@@ -299,6 +299,51 @@ Os padrões do repositório estão escritos como skills em `.claude/skills/`:
 São o resumo do que este README explica por extenso, no ponto em que a decisão
 é tomada.
 
+## Deploy
+
+O app vai para a **Vercel**; a Cloudflare entra só com R2 e CDN das imagens
+(veja a [spec 0005](specs/0005-upload-de-imagens-no-painel.md)).
+
+Esta versão do TanStack Start não tem alvo de Vercel: `vp build` gera
+`dist/client` (estático) e `dist/server/server.js`, que exporta um handler
+`fetch` da Web. A Vercel, sozinha, não sabe o que fazer com isso — o primeiro
+deploy respondeu 404 em tudo.
+
+`scripts/build-vercel.mjs` fecha esse vão empacotando na Build Output API v3,
+que é o contrato mais explícito que a Vercel oferece: em vez de torcer para o
+detector de framework acertar, a saída descreve o que é estático, o que é
+função e como rotear.
+
+```bash
+pnpm run build:vercel
+```
+
+O `vercel.json` já aponta para esse comando, então no painel da Vercel basta
+deixar o diretório raiz no repositório e não escolher framework nenhum.
+
+Dois detalhes do empacotamento que não são óbvios:
+
+- **O bundle do servidor não embute as dependências.** Fora de `apps/web` nada
+  resolve, então `@vercel/nft` rastreia os imports e copia só o alcançável. Os
+  links do pnpm são recriados como links, não materializados: copiar o pacote
+  inteiro arrastava `typescript` e `sharp` junto e levava a função de 11 MB
+  para 183.
+- **O adaptador converte `req`/`res` do Node para `Request`/`Response`.** O
+  `set-cookie` sai como vários cabeçalhos, porque iterar os headers juntaria
+  tudo numa string só e o login do painel não fecharia; e o corpo é repassado
+  como stream, para não matar o streaming do SSR.
+
+### Variáveis
+
+O site sobe sem nenhuma. `DATABASE_URL`, `BETTER_AUTH_SECRET` e
+`BETTER_AUTH_URL` só são exigidas quando uma rota de `/api` é chamada — sem
+elas o site responde 200 e só o painel fica fora do ar. `BETTER_AUTH_URL`
+precisa bater com o domínio real, senão o cookie de sessão não fecha.
+
+`VITE_SITE_URL` entra no build e define canônicas, Open Graph e sitemap. Sem
+ela o fallback é `https://alimentossaojorge.com`, que num domínio de
+pré-visualização aponta para o lugar errado.
+
 ## Qualidade
 
 Tudo o que o CI executa, em um comando:

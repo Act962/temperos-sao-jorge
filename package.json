@@ -9,6 +9,7 @@
 	"scripts": {
 		"dev": "vp run -r dev",
 		"build": "vp run -r build",
+		"build:vercel": "vp run --filter web build && node scripts/build-vercel.mjs",
 		"check-types": "vp run -r check-types",
 		"check": "biome check --write .",
 		"lint": "vp lint",
@@ -41,6 +42,7 @@
 		"@biomejs/biome": "^2.5.11",
 		"@my-better-t-app/config": "workspace:*",
 		"@types/node": "catalog:",
+		"@vercel/nft": "^1.11.0",
 		"rolldown": "1.2.6",
 		"sharp": "^0.35.4",
 		"typescript": "catalog:",
