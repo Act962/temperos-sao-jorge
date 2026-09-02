@@ -340,9 +340,21 @@ O site sobe sem nenhuma. `DATABASE_URL`, `BETTER_AUTH_SECRET` e
 elas o site responde 200 e só o painel fica fora do ar. `BETTER_AUTH_URL`
 precisa bater com o domínio real, senão o cookie de sessão não fecha.
 
-`VITE_SITE_URL` entra no build e define canônicas, Open Graph e sitemap. Sem
-ela o fallback é `https://alimentossaojorge.com`, que num domínio de
-pré-visualização aponta para o lugar errado.
+`VITE_SITE_URL` entra no build e define canônicas, Open Graph e sitemap. O
+fallback já é `https://alimentossaojorge.com`, então **em produção não precisa
+ser definida** — só se o domínio mudar. O `apps/web/.env` aponta para
+`localhost` em desenvolvimento e não vai para o deploy.
+
+Numa pré-visualização, a canônica apontando para o domínio de produção é o
+comportamento certo, não um defeito: é assim que se diz ao buscador qual é o
+endereço de verdade. Quem impede a URL provisória de ser indexada é o
+`robots.txt`, que decide pelo host que está servindo — só o domínio de produção
+recebe `Allow`. Sem variável para lembrar em cada ambiente novo: esquecer seria
+silencioso, e tirar uma URL provisória do índice depois dá muito mais trabalho
+do que nunca ter deixado entrar.
+
+O painel, num ambiente sem banco, diz que está indisponível em vez de oferecer
+um formulário de acesso que falharia na senha.
 
 ## Qualidade
 

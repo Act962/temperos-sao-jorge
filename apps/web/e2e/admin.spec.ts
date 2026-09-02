@@ -23,13 +23,24 @@ test.describe("acesso ao painel", () => {
 			expect(resposta?.status()).toBe(200);
 
 			await expect(
-				page.getByRole("heading", { name: "Administração" }),
+				page.getByRole("heading", { name: /Administração/ }),
 			).toBeVisible();
 			// A URL pretendida é preservada: o formulário ocupa o lugar do
 			// conteúdo em vez de redirecionar para uma tela de login separada.
 			expect(new URL(page.url()).pathname).toBe(rota);
 		});
 	}
+
+	test("diz que está indisponível em vez de oferecer login que falha", async ({
+		page,
+	}) => {
+		// A suíte roda sem banco, então a API de sessão responde erro — que é
+		// exatamente o cenário de um ambiente publicado para validação.
+		await page.goto("/admin");
+		await expect(
+			page.getByRole("heading", { name: "Administração indisponível" }),
+		).toBeVisible();
+	});
 
 	test("não expõe o painel à indexação", async ({ page }) => {
 		await page.goto("/admin");

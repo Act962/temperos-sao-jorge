@@ -89,7 +89,10 @@ test.describe("SEO", () => {
 
 		const robots = await request.get("/robots.txt");
 		expect(robots.status()).toBe(200);
-		expect(await robots.text()).toContain("Sitemap:");
+		// A suíte roda em localhost, que nunca é o domínio de produção — mesmo
+		// caso de uma URL de pré-visualização. Os dois ramos da regra são
+		// exercitados em `src/lib/robots.test.ts`.
+		expect(await robots.text()).toContain("Disallow: /");
 	});
 });
 

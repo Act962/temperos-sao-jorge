@@ -1,30 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SITE } from "@/data/site";
-
-/**
- * robots.txt, served dynamically so the sitemap URL always matches the origin
- * configured in `VITE_SITE_URL`.
- */
-function renderRobots(): string {
-	return [
-		"User-agent: *",
-		"Allow: /",
-		"",
-		`Sitemap: ${SITE.url}/sitemap.xml`,
-		"",
-	].join("\n");
-}
+import { renderRobots } from "@/lib/robots";
 
 export const Route = createFileRoute("/robots.txt")({
 	server: {
 		handlers: {
-			GET: () =>
-				new Response(renderRobots(), {
+			GET: ({ request }) => {
+				const cabecalhos = request.headers;
+				const host =
+					cabecalhos.get("x-forwarded-host") ?? cabecalhos.get("host");
+
+				return new Response(renderRobots(host), {
 					headers: {
 						"content-type": "text/plain; charset=utf-8",
-						"cache-control": "public, max-age=3600",
+						// Curto de propósito: apontar o domínio definitivo troca a
+						// resposta, e um cache longo seguraria o `Disallow` no ar.
+						"cache-control": "public, max-age=300",
 					},
-				}),
+				});
+			},
 		},
 	},
 });
