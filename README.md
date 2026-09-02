@@ -331,14 +331,18 @@ arquivos de `src/data/`, que são a mesma origem do `catalog:seed` — nenhum
 número fica escrito à mão.
 
 Essa segunda suíte só entra quando há `DATABASE_URL`, mesmo critério dos testes
-de integração do Drizzle. Para rodá-la, com o schema já aplicado:
+de integração do Drizzle. Basta um Postgres vazio: o preparo aplica o schema,
+carrega o catálogo e abre uma sessão no painel sozinho. O arquivo de sessão fica
+em `apps/web/e2e/.auth/`, fora do Git.
 
 ```bash
-pnpm run db:push
+pnpm run db:start
 ```
 
-O preparo carrega o catálogo e abre uma sessão no painel sozinho; o arquivo de
-sessão fica em `apps/web/e2e/.auth/`, fora do Git.
+> O banco apontado por `DATABASE_URL` é **descartável** enquanto o e2e roda: o
+> `push` alinha o schema à força e a carga apaga o catálogo antes de gravar. Não
+> aponte para nada que você queira manter — é a mesma regra dos testes de
+> integração, que truncam as tabelas a cada caso.
 
 ### CI
 

@@ -100,11 +100,8 @@ jobs:
       - name: Build
         run: pnpm --filter web build
 
-      # Aplicar schema é tarefa de migração, não de teste: o preparo da suíte
-      # só carrega o catálogo, e conta encontrar as tabelas prontas.
-      - name: Aplicar o schema
-        run: pnpm run db:push
-
+      # O preparo da suíte aplica o schema e carrega o catálogo: basta o
+      # Postgres do serviço estar de pé, vazio.
       - name: End-to-end
         run: pnpm --filter web exec playwright test
 
