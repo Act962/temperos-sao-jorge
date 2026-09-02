@@ -4,8 +4,12 @@ Site institucional e catálogo da São Jorge Alimentos, implementado a partir do
 projeto do Claude Design `Sao Jorge Alimentos.dc.html`.
 
 Monorepo criado com [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack):
-TanStack Start (SSR) + Hono + tRPC + Drizzle + PostgreSQL + Better-Auth, com
-Biome e Vite+.
+TanStack Start (SSR) + tRPC + Drizzle + PostgreSQL + Better-Auth, com Biome e
+Vite+.
+
+O backend Hono separado foi absorvido pelo TanStack Start: `/api/auth/*` e
+`/api/trpc/*` são server routes do próprio app, na mesma origem do site. Um
+artefato de deploy, sem CORS.
 
 ## Páginas
 
@@ -148,12 +152,22 @@ pelo `overrides` no `package.json` da raiz).
 
 O build de produção não usa esse caminho, então não é afetado.
 
-Banco de dados (necessário apenas para a camada de autenticação, que hoje não é
-usada pelo site):
+### Banco de dados
+
+O site público **não usa banco**: o conteúdo é publicado estaticamente e as
+páginas sobem sem `DATABASE_URL`. Isso é garantido por design — `packages/db` e
+`packages/auth` criam suas instâncias sob demanda, e as rotas de API importam
+esses módulos dinamicamente, para que o env do servidor não seja validado no
+boot do site.
+
+O Postgres é necessário só para autenticação e, adiante, para o admin:
 
 ```bash
 pnpm run db:push
 ```
+
+Sem ele, `/` e as demais páginas respondem 200 normalmente; apenas
+`/api/auth/*` e `/api/trpc/*` falham.
 
 ## Qualidade
 

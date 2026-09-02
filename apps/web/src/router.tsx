@@ -1,5 +1,4 @@
 import type { AppRouter } from "@my-better-t-app/api/routers/index";
-import { env } from "@my-better-t-app/env/web";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
@@ -12,41 +11,6 @@ import { RouteLoader } from "./components/ui/route-loader";
 import { routeTree } from "./routeTree.gen";
 import { TRPCProvider } from "./utils/trpc";
 
-function getServerUrl(url: string) {
-	const processEnv = (
-		globalThis as {
-			process?: { env?: Record<string, string | undefined> };
-		}
-	).process?.env;
-	if (typeof window === "undefined" && processEnv?.SERVER_URL) {
-		return processEnv.SERVER_URL.endsWith("/")
-			? processEnv.SERVER_URL.slice(0, -1)
-			: processEnv.SERVER_URL;
-	}
-
-	const normalized = url.endsWith("/") ? url.slice(0, -1) : url;
-
-	if (!normalized.startsWith("/")) {
-		return normalized;
-	}
-
-	if (typeof window !== "undefined") {
-		return `${window.location.origin}${normalized}`;
-	}
-
-	const vercelUrl =
-		processEnv?.VERCEL_ENV === "production"
-			? (processEnv?.VERCEL_PROJECT_PRODUCTION_URL ?? processEnv?.VERCEL_URL)
-			: (processEnv?.VERCEL_URL ?? processEnv?.VERCEL_PROJECT_PRODUCTION_URL);
-	if (vercelUrl) {
-		const origin = vercelUrl.startsWith("http")
-			? vercelUrl
-			: `https://${vercelUrl}`;
-		return `${origin}${normalized}`;
-	}
-
-	return `http://localhost:3000${normalized}`;
-}
 function createQueryClient() {
 	return new QueryClient({
 		queryCache: new QueryCache({
@@ -65,18 +29,12 @@ function createQueryClient() {
 	});
 }
 
+/**
+ * A API vive na mesma origem desde a fusão do backend Hono no TanStack Start,
+ * então basta um caminho relativo — sem host, sem CORS, sem credentials.
+ */
 const trpcClient = createTRPCClient<AppRouter>({
-	links: [
-		httpBatchLink({
-			url: `${getServerUrl(env.VITE_SERVER_URL)}/trpc`,
-			fetch(url, options) {
-				return fetch(url, {
-					...options,
-					credentials: "include",
-				});
-			},
-		}),
-	],
+	links: [httpBatchLink({ url: "/api/trpc" })],
 });
 
 export const getRouter = () => {

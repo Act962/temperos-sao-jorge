@@ -16,7 +16,6 @@
     "staged": "vp staged",
     "hooks:setup": "vp config",
     "dev:web": "vp run --filter web dev",
-    "dev:server": "vp run --filter server dev",
     "db:push": "vp run --filter @my-better-t-app/db db:push",
     "db:studio": "vp run --filter @my-better-t-app/db db:studio",
     "db:generate": "vp run --filter @my-better-t-app/db db:generate",

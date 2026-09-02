@@ -148,6 +148,9 @@ importers:
       '@my-better-t-app/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@my-better-t-app/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@my-better-t-app/env':
         specifier: workspace:*
         version: link:../../packages/env
