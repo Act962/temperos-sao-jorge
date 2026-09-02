@@ -4,6 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "vp build",
+		"build:vercel": "vp build && node ../../scripts/build-vercel.mjs",
 		"serve": "vp preview",
 		"dev": "vp dev",
 		"start": "vp build && vp preview",

@@ -318,8 +318,16 @@ função e como rotear.
 pnpm run build:vercel
 ```
 
-O `vercel.json` já aponta para esse comando, então no painel da Vercel basta
-deixar o diretório raiz no repositório e não escolher framework nenhum.
+O projeto na Vercel usa **Root Directory `apps/web`**, e é lá que fica o
+`vercel.json` — a Vercel lê esse arquivo a partir do diretório raiz do projeto,
+não do repositório.
+
+O script grava `.vercel/output` **ao lado de quem o chamou**, não numa raiz
+fixa. É o que faz `pnpm run build:vercel` funcionar tanto da raiz do
+repositório quanto de `apps/web`: a Vercel procura a saída dentro do Root
+Directory, e fixar a raiz gerava o pacote onde ela nunca ia olhar. O primeiro
+deploy morreu antes disso, num erro mais simples — `pnpm run build:vercel`
+rodando de `apps/web`, onde o script não existia.
 
 Dois detalhes do empacotamento que não são óbvios:
 

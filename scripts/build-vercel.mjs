@@ -36,7 +36,14 @@ import { nodeFileTrace } from "@vercel/nft";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = path.join(RAIZ, "apps/web/dist");
-const SAIDA = path.join(RAIZ, ".vercel/output");
+/**
+ * A saída fica ao lado de quem chamou, não na raiz do repositório.
+ *
+ * A Vercel procura `.vercel/output` dentro do Root Directory do projeto, que
+ * neste caso é `apps/web`. Fixar a raiz aqui fazia o pacote ser gerado num
+ * lugar onde ela nunca ia olhar.
+ */
+const SAIDA = path.join(process.cwd(), ".vercel/output");
 const FUNCAO = path.join(SAIDA, "functions/index.func");
 
 /**
