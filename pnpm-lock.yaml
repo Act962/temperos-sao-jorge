@@ -99,6 +99,9 @@ importers:
       '@my-better-t-app/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@my-better-t-app/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@my-better-t-app/env':
         specifier: workspace:*
         version: link:../../packages/env
@@ -211,6 +214,9 @@ importers:
       '@my-better-t-app/auth':
         specifier: workspace:*
         version: link:../auth
+      '@my-better-t-app/core':
+        specifier: workspace:*
+        version: link:../core
       '@my-better-t-app/db':
         specifier: workspace:*
         version: link:../db

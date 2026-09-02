@@ -35,7 +35,8 @@
 		"react-dom": "catalog:",
 		"sonner": "catalog:",
 		"tailwindcss": "catalog:",
-		"zod": "catalog:"
+		"zod": "catalog:",
+		"@my-better-t-app/core": "workspace:*"
 	},
 	"devDependencies": {
 		"@my-better-t-app/config": "workspace:*",

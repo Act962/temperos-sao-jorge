@@ -10,9 +10,11 @@
  *   pnpm run catalog:publish [-- --dry-run]
  */
 
+import { execFile } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import {
@@ -205,9 +207,29 @@ async function main() {
 		"utf8",
 	);
 
+	// O gerador emite JSON puro (chaves entre aspas, sem vírgula final). Sem
+	// passar o Biome aqui, publicar duas vezes seguidas produziria um diff
+	// enorme de puro estilo e esconderia a mudança de conteúdo de verdade.
+	await formatar([
+		path.join(DATA, "products.ts"),
+		path.join(DATA, "recipes.ts"),
+	]);
+
 	console.log("apps/web/src/data/{products,recipes}.ts regravados");
 	console.log("rode `pnpm --filter web build` para publicar o site");
 	process.exit(0);
+}
+
+async function formatar(arquivos) {
+	const biome = path.join(ROOT, "node_modules", ".bin", "biome");
+	try {
+		await promisify(execFile)(biome, ["check", "--write", ...arquivos], {
+			shell: process.platform === "win32",
+		});
+	} catch (erro) {
+		console.warn("aviso: nao foi possivel formatar a saida com o Biome");
+		console.warn(erro.message);
+	}
 }
 
 await main();

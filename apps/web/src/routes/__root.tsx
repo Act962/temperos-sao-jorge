@@ -6,6 +6,7 @@ import {
 	HeadContent,
 	Outlet,
 	Scripts,
+	useRouterState,
 } from "@tanstack/react-router";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -78,26 +79,40 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootDocument() {
+	// O painel traz a própria moldura (barra lateral, ou a tela de acesso em tela
+	// cheia). Reaproveitar o cabeçalho e o rodapé do site aqui colocaria o menu
+	// público e o formulário de newsletter dentro da administração — e um
+	// `<main>` dentro de outro, que é HTML inválido.
+	const noAdmin = useRouterState({
+		select: (estado) => estado.location.pathname.startsWith("/admin"),
+	});
+
 	return (
 		<html lang={SITE.lang}>
 			<head>
 				<HeadContent />
 			</head>
 			<body>
-				<a
-					href="#conteudo"
-					className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-100 focus:rounded-[4px] focus:bg-brand focus:px-4 focus:py-2 focus:font-sans focus:font-semibold focus:text-sm focus:text-white"
-				>
-					Pular para o conteúdo
-				</a>
+				{noAdmin ? null : (
+					<a
+						href="#conteudo"
+						className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-100 focus:rounded-[4px] focus:bg-brand focus:px-4 focus:py-2 focus:font-sans focus:font-semibold focus:text-sm focus:text-white"
+					>
+						Pular para o conteúdo
+					</a>
+				)}
 
-				<div className="flex min-h-svh flex-col">
-					<SiteHeader />
-					<main id="conteudo" className="flex-1">
-						<Outlet />
-					</main>
-					<SiteFooter />
-				</div>
+				{noAdmin ? (
+					<Outlet />
+				) : (
+					<div className="flex min-h-svh flex-col">
+						<SiteHeader />
+						<main id="conteudo" className="flex-1">
+							<Outlet />
+						</main>
+						<SiteFooter />
+					</div>
+				)}
 
 				<Toaster richColors position="top-center" />
 				<Scripts />

@@ -19,7 +19,8 @@
 		"@trpc/client": "catalog:",
 		"@trpc/server": "catalog:",
 		"dotenv": "catalog:",
-		"zod": "catalog:"
+		"zod": "catalog:",
+		"@my-better-t-app/core": "workspace:*"
 	},
 	"devDependencies": {
 		"@my-better-t-app/config": "workspace:*",

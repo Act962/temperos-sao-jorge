@@ -82,6 +82,35 @@ O `time` das receitas ("1 h 20 min") é derivado de `minutes` na publicação. E
 dois campos independentes, e bastava um ficar para trás para a receita exibir um
 tempo e cair no filtro de duração do outro.
 
+## Painel de administração
+
+Em `/admin`, na mesma aplicação e na mesma origem do site — não há servidor
+separado. É onde o catálogo é editado antes de publicar.
+
+| Rota               | O que faz                                              |
+| ------------------ | ------------------------------------------------------ |
+| `/admin`           | Visão geral: contagens e produtos por família           |
+| `/admin/produtos`  | Criar, editar e remover produtos                        |
+| `/admin/receitas`  | Lista das receitas (edição na próxima fatia)            |
+
+O acesso é por e-mail e senha (Better-Auth). Sem sessão, o formulário de acesso
+ocupa o lugar do conteúdo em vez de redirecionar: entrar em `/admin/produtos`
+leva de volta a `/admin/produtos` depois do login. As rotas do painel saem do
+`noindex, nofollow` e não carregam o cabeçalho nem o rodapé do site.
+
+Primeiro usuário, com o servidor de pé:
+
+```bash
+curl -X POST http://localhost:3000/api/auth/sign-up/email -H "Content-Type: application/json" -d '{"email":"voce@alimentossaojorge.com","password":"trocar-esta-senha","name":"Seu Nome"}'
+```
+
+As regras não moram na tela. O formulário de produto não confere o caminho do
+packshot nem o formato do slug — quem decide é o domínio em `packages/core`, e a
+mensagem dele aparece no lugar do erro. Mudar um chá para a família de ervas sem
+mover a foto responde, na própria tela, *"O packshot de 'Melissa' está na pasta
+de outra família"*. Duplicar a regra no formulário criaria uma segunda verdade
+para manter em sincronia.
+
 ## Organização do código
 
 Componentes têm nomes e arquivos em inglês, um componente por arquivo; o
@@ -97,6 +126,7 @@ apps/web/src/
 │   ├── about/      # linha do tempo e galeria de arquivo
 │   ├── contact/    # formulário e dados de contato
 │   ├── legal/      # shell dos documentos legais
+│   ├── admin/      # casca do painel, acesso e formulários
 │   └── ui/         # primitivos da marca (botão, heading, reveal, imagens…)
 ├── data/           # catálogo, receitas, linha do tempo, textos legais, config
 ├── hooks/          # use-image-fallback
@@ -257,6 +287,10 @@ O e2e roda contra o **build de produção** e **sem `DATABASE_URL`**. Não é
 descuido: o site público não usa banco, e a suíte existe para travar essa
 propriedade. Se alguém reintroduzir um import estático de `packages/auth` ou
 `packages/db` numa rota do site, o e2e quebra inteiro.
+
+As rotas do painel entram na mesma suíte, e pelo mesmo motivo: sem banco elas
+ainda respondem 200 com a tela de acesso. Uma delas devolvendo 500 é o sinal de
+que a casca do admin arrastou o banco para o bundle do site.
 
 ### CI
 
