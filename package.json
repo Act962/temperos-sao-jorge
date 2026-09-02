@@ -24,7 +24,9 @@
     "db:start": "vp run --filter @my-better-t-app/db db:start",
     "db:watch": "vp run --filter @my-better-t-app/db db:watch",
     "db:stop": "vp run --filter @my-better-t-app/db db:stop",
-    "db:down": "vp run --filter @my-better-t-app/db db:down"
+    "db:down": "vp run --filter @my-better-t-app/db db:down",
+    "images:products": "node scripts/optimize-product-images.mjs",
+    "images:favicons": "node scripts/generate-favicons.mjs"
   },
   "dependencies": {
     "@my-better-t-app/env": "workspace:*",
@@ -36,6 +38,7 @@
     "@my-better-t-app/config": "workspace:*",
     "@types/node": "catalog:",
     "rolldown": "1.2.6",
+    "sharp": "^0.35.4",
     "typescript": "catalog:",
     "vite-plus": "0.3.0"
   },

@@ -1,1 +1,143 @@
 @import "@my-better-t-app/ui/globals.css";
+
+@source "./";
+
+/* ---------------------------------------------------------------------------
+ * São Jorge Alimentos — brand layer
+ * Tokens mirror the approved Claude Design canvas (Sao Jorge Alimentos.dc.html).
+ * ------------------------------------------------------------------------- */
+@theme {
+	--font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+	--font-display: "Barlow Condensed", "Barlow", ui-sans-serif, sans-serif;
+	--font-script: "Caveat", ui-serif, cursive;
+
+	/* Surfaces */
+	--color-cream: #f7f1e1;
+	--color-cream-raised: #fbf6ea;
+	--color-cream-sunken: #f2ead7;
+	--color-cream-bright: #fffdf6;
+	--color-cream-fg: #fff6e8;
+	--color-night: #191110;
+
+	/* Brand red */
+	--color-brand: #8c1414;
+	--color-brand-hover: #a81a1a;
+	--color-brand-bright: #b32222;
+	--color-brand-dark: #7a1010;
+	--color-brand-deep: #6c0c0c;
+	--color-brand-deeper: #530909;
+	--color-brand-rose: #f5b0b0;
+	--color-brand-blush: #f0c9c9;
+
+	/* Ink */
+	--color-ink: #2b211c;
+	--color-ink-soft: #4a3b33;
+	--color-ink-muted: #5b4a41;
+	--color-ink-faint: #8a7a70;
+	--color-ink-sand: #c8b9ae;
+
+	--ease-brand: cubic-bezier(0.22, 0.7, 0.24, 1);
+}
+
+@layer base {
+	html {
+		scroll-behavior: smooth;
+		font-family: var(--font-sans);
+	}
+
+	body {
+		background-color: var(--color-cream);
+		color: var(--color-ink);
+		font-family: var(--font-sans);
+		overflow-x: hidden;
+	}
+
+	::selection {
+		background-color: var(--color-brand);
+		color: #fff;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		html {
+			scroll-behavior: auto;
+		}
+	}
+}
+
+@layer utilities {
+	/* Container matching the canvas: 1240px content well with 36px gutters. */
+	.shell {
+		margin-inline: auto;
+		width: 100%;
+		max-width: 78rem; /* 1248px */
+		padding-inline: 1.5rem;
+	}
+
+	@media (min-width: 768px) {
+		.shell {
+			padding-inline: 2.25rem;
+		}
+	}
+
+	.shell-narrow {
+		margin-inline: auto;
+		width: 100%;
+		max-width: 68.75rem; /* 1100px */
+		padding-inline: 1.5rem;
+	}
+
+	@media (min-width: 768px) {
+		.shell-narrow {
+			padding-inline: 2.25rem;
+		}
+	}
+
+	.shell-prose {
+		margin-inline: auto;
+		width: 100%;
+		max-width: 51.25rem; /* 820px */
+		padding-inline: 1.5rem;
+	}
+
+	@media (min-width: 768px) {
+		.shell-prose {
+			padding-inline: 2.25rem;
+		}
+	}
+}
+
+/* Entrance animations used by the hero and the scroll reveal helper. */
+@keyframes brand-rise {
+	from {
+		opacity: 0;
+		transform: translateY(26px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes brand-ken-burns {
+	from {
+		transform: scale(1.02);
+	}
+	to {
+		transform: scale(1.12);
+	}
+}
+
+.animate-brand-rise {
+	animation: brand-rise 0.9s var(--ease-brand) both;
+}
+
+.animate-brand-ken-burns {
+	animation: brand-ken-burns 18s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-brand-rise,
+	.animate-brand-ken-burns {
+		animation: none;
+	}
+}

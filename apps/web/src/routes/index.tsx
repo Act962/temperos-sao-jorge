@@ -1,52 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { BrandValuesBar } from "@/components/home/brand-values-bar";
+import { HeroSection } from "@/components/home/hero-section";
+import { ProductFamiliesSection } from "@/components/home/product-families-section";
+import { RecipesPreviewSection } from "@/components/home/recipes-preview-section";
+import { StorySection } from "@/components/home/story-section";
+import { buildPageSeo } from "@/lib/seo";
 
-import { useTRPC } from "@/utils/trpc";
+const DESCRIPTION =
+	"Temperos, chás, ervas, molhos, farinhas e grãos naturais São Jorge Alimentos. Há mais de 40 anos levando qualidade e sabor para a mesa das famílias brasileiras.";
 
 export const Route = createFileRoute("/")({
-  component: HomeComponent,
+	head: () => {
+		const seo = buildPageSeo({ description: DESCRIPTION, path: "/" });
+		return { meta: seo.meta, links: seo.links };
+	},
+	component: HomePage,
 });
 
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
-
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
-
-function HomeComponent() {
-  const trpc = useTRPC();
-  const healthCheck = useQuery(trpc.healthCheck.queryOptions());
-
-  return (
-    <div className="container mx-auto max-w-3xl px-4 py-2">
-      <pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
-      <div className="grid gap-6">
-        <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-medium">API Status</h2>
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2 w-2 rounded-full ${healthCheck.data ? "bg-green-500" : "bg-red-500"}`}
-            />
-            <span className="text-muted-foreground text-sm">
-              {healthCheck.isLoading
-                ? "Checking..."
-                : healthCheck.data
-                  ? "Connected"
-                  : "Disconnected"}
-            </span>
-          </div>
-        </section>
-      </div>
-    </div>
-  );
+function HomePage() {
+	return (
+		<>
+			{/* The visible <h1> lives inside HeroSection. */}
+			<HeroSection />
+			<StorySection />
+			<ProductFamiliesSection />
+			<RecipesPreviewSection />
+			<BrandValuesBar />
+		</>
+	);
 }
