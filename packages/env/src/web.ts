@@ -7,6 +7,7 @@ export const env = createEnv({
 		/** Public origin of the marketing site — canonical URLs, OG tags, sitemap. */
 		VITE_SITE_URL: z.url().default("https://alimentossaojorge.com"),
 	},
-	runtimeEnv: (import.meta as any).env,
+	// `import.meta.env` é tipado pelo client do Vite, incluído no tsconfig.
+	runtimeEnv: import.meta.env,
 	emptyStringAsUndefined: true,
 });

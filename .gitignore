@@ -56,3 +56,9 @@ coverage
 .cache
 tmp
 temp
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+.playwright/

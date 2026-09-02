@@ -171,15 +171,51 @@ Sem ele, `/` e as demais páginas respondem 200 normalmente; apenas
 
 ## Qualidade
 
+Tudo o que o CI executa, em um comando:
+
+```bash
+pnpm run ci
+```
+
+Separadamente:
+
 ```bash
 pnpm run check
 ```
 
-Type-check apenas do site:
+```bash
+pnpm run test
+```
 
 ```bash
-pnpm --filter web exec tsc --noEmit
+pnpm run test:e2e
 ```
+
+### Testes
+
+| Camada | Ferramenta | Onde |
+| --- | --- | --- |
+| Unitário e integração | Vitest (vem no Vite+) | `apps/web/src/**/*.test.ts(x)` |
+| End-to-end | Playwright | `apps/web/e2e/**/*.spec.ts` |
+
+Os testes de dados e de `lib/` rodam em ambiente Node; só os de componente
+pedem jsdom, com `// @vitest-environment jsdom` no topo do arquivo. Isso mantém
+a suíte unitária em poucos segundos.
+
+O e2e roda contra o **build de produção** e **sem `DATABASE_URL`**. Não é
+descuido: o site público não usa banco, e a suíte existe para travar essa
+propriedade. Se alguém reintroduzir um import estático de `packages/auth` ou
+`packages/db` numa rota do site, o e2e quebra inteiro.
+
+### CI
+
+`.github/workflows/ci.yml` roda em push para `main` e em pull request, em dois
+jobs: verificação (`biome ci`, tipos, unitários, build) e, se passar, o
+end-to-end com o relatório do Playwright anexado como artefato.
+
+Os primitivos shadcn em `packages/ui/src/components/` são formatados mas não
+lintados: o CLI do shadcn reescreve esses arquivos, então correção manual se
+perde na próxima geração.
 
 ## Pendências conhecidas
 

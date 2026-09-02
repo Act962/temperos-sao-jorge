@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Um push novo cancela a execução anterior do mesmo branch: nada de fila de
+# builds obsoletos disputando runner.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Silencia o aviso de "modules dir purge" do pnpm em ambiente sem TTY.
+  CI: "true"
+
+jobs:
+  verificacao:
+    name: Formato, tipos e testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Formato e lint
+        run: pnpm exec biome ci .
+
+      - name: Tipos
+        run: pnpm --filter web exec tsc --noEmit
+
+      - name: Testes unitários e de integração
+        run: pnpm --filter web exec vitest run
+
+      - name: Build
+        run: pnpm --filter web build
+
+  e2e:
+    name: End-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Só roda se a verificação passou: e2e é caro e falharia pelos mesmos
+    # motivos.
+    needs: verificacao
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Instalar navegador do Playwright
+        run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - name: Build
+        run: pnpm --filter web build
+
+      # Nenhuma variável de banco é definida de propósito: o site público não
+      # usa Postgres, e a suíte existe justamente para travar essa propriedade.
+      - name: End-to-end
+        run: pnpm --filter web exec playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
