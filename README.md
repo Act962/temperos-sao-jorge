@@ -240,6 +240,22 @@ pnpm run db:push
 Sem ele, `/` e as demais páginas respondem 200 normalmente; apenas
 `/api/auth/*` e `/api/trpc/*` falham.
 
+## Como as mudanças começam
+
+Mudança de comportamento — regra de negócio, modelo de conteúdo, fatia do
+painel, o que o site publica — começa por uma especificação em `specs/`, com
+problema, decisão, alternativas descartadas e critérios de aceite verificáveis.
+Cada critério vira um teste na implementação.
+
+Ajuste de espaçamento, cor, nome de componente ou refatoração sem mudança de
+comportamento vai direto ao código. Spec para isso é cerimônia, e cerimônia faz
+as pessoas pararem de ler as specs que importam.
+
+Os padrões do repositório estão escritos como skills em `.claude/skills/`:
+`spec-primeiro`, `regra-de-negocio`, `componente-do-site` e `tela-do-admin`.
+São o resumo do que este README explica por extenso, no ponto em que a decisão
+é tomada.
+
 ## Qualidade
 
 Tudo o que o CI executa, em um comando:
