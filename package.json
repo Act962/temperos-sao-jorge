@@ -26,9 +26,11 @@
 		"db:down": "vp run --filter @my-better-t-app/db db:down",
 		"images:products": "node scripts/optimize-product-images.mjs",
 		"images:favicons": "node scripts/generate-favicons.mjs",
-		"test": "vp run --filter web test",
+		"test": "vp run -r test",
 		"test:e2e": "vp run --filter web test:e2e",
-		"ci": "biome ci . && vp run -r check-types && vp run --filter web test && vp run --filter web build"
+		"ci": "biome ci . && vp run -r check-types && vp run -r test && vp run --filter web build",
+		"catalog:seed": "vp run --filter @my-better-t-app/db catalog:seed",
+		"catalog:publish": "vp run --filter @my-better-t-app/db catalog:publish"
 	},
 	"dependencies": {
 		"@my-better-t-app/env": "workspace:*",

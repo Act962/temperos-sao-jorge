@@ -39,10 +39,13 @@ jobs:
         run: pnpm exec biome ci .
 
       - name: Tipos
-        run: pnpm --filter web exec tsc --noEmit
+        run: pnpm run check-types
 
+      # Roda a suíte de todos os pacotes: domínio, adaptadores e site. Os
+      # testes de integração do Drizzle se pulam sozinhos sem DATABASE_URL,
+      # então o job não precisa de Postgres.
       - name: Testes unitários e de integração
-        run: pnpm --filter web exec vitest run
+        run: pnpm run test
 
       - name: Build
         run: pnpm --filter web build

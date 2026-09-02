@@ -1,12 +1,6 @@
-/**
- * Recipe content.
- *
- * "macarrao-ao-molho-de-tomate-caseiro" is transcribed verbatim from the
- * approved design canvas. The remaining five carry the same card metadata the
- * canvas defined; their ingredient lists and steps were authored here so every
- * recipe route ships real content instead of an empty page. Have the brand
- * review those five before launch.
- */
+// Gerado por packages/db/scripts/publish-catalog.mjs — não edite à mão.
+// A fonte da verdade é o Postgres; rode `pnpm run catalog:publish` para
+// regravar este arquivo a partir do banco.
 
 export const RECIPE_CATEGORIES = [
 	"Almoço",
@@ -17,7 +11,6 @@ export const RECIPE_CATEGORIES = [
 
 export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number];
 
-/** Filter chips shown above the recipe grid, in the order the canvas defined. */
 export const RECIPE_FILTERS = [
 	"Todas",
 	"Almoço",
@@ -33,9 +26,7 @@ export type RecipeFilter = (typeof RECIPE_FILTERS)[number];
 export interface Recipe {
 	readonly slug: string;
 	readonly name: string;
-	/** Human-readable duration, e.g. "1 h 20 min". */
 	readonly time: string;
-	/** Total minutes — drives the "Até 30 min" / "+ 30 min" filters. */
 	readonly minutes: number;
 	readonly level: "Fácil" | "Média" | "Difícil";
 	readonly servings: number;
@@ -44,74 +35,10 @@ export interface Recipe {
 	readonly image: string;
 	readonly ingredients: readonly string[];
 	readonly steps: readonly string[];
-	/** Product slugs from the catalogue that this recipe uses. */
 	readonly usedProductSlugs: readonly string[];
 }
 
 export const RECIPES: readonly Recipe[] = [
-	{
-		slug: "macarrao-ao-molho-de-tomate-caseiro",
-		name: "Macarrão ao Molho de Tomate Caseiro",
-		time: "30 min",
-		minutes: 30,
-		level: "Fácil",
-		servings: 4,
-		category: "Almoço",
-		summary:
-			"Um clássico de todo dia: massa al dente, molho de tomate apurado com alho e cebola e manjericão fresco para finalizar.",
-		image: "/images/recipes/macarrao-ao-molho-de-tomate-caseiro.jpg",
-		ingredients: [
-			"500 g de Macarrão Espaguete São Jorge",
-			"1 lata de Molho de Tomate Tradicional São Jorge",
-			"2 dentes de alho picados",
-			"1/2 cebola picada",
-			"2 colheres de azeite",
-			"Sal e pimenta a gosto",
-			"Folhas de manjericão",
-		],
-		steps: [
-			"Cozinhe o macarrão conforme as instruções da embalagem. Escorra e reserve.",
-			"Em uma panela, aqueça o azeite e doure o alho e a cebola.",
-			"Adicione o molho de tomate, tempere com sal e pimenta e deixe cozinhar por 10 minutos, mexendo de vez em quando.",
-			"Misture o macarrão ao molho, finalize com manjericão e sirva.",
-		],
-		usedProductSlugs: ["alho-triturado-200-g", "oregano"],
-	},
-	{
-		slug: "lasanha-a-bolonhesa",
-		name: "Lasanha à Bolonhesa",
-		time: "1 h 20 min",
-		minutes: 80,
-		level: "Média",
-		servings: 6,
-		category: "Jantar",
-		summary:
-			"Camadas de massa, ragu de carne bem temperado e queijo gratinado — o prato que reúne a família à mesa.",
-		image: "/images/recipes/lasanha-a-bolonhesa.jpg",
-		ingredients: [
-			"500 g de massa para lasanha",
-			"700 g de carne moída",
-			"1 cebola picada",
-			"2 colheres de sopa de Alho Triturado São Jorge",
-			"800 g de molho de tomate",
-			"400 g de queijo mussarela fatiado",
-			"200 g de presunto fatiado",
-			"Orégano, sal e pimenta-do-reino a gosto",
-		],
-		steps: [
-			"Refogue a cebola e o alho triturado no azeite até dourarem.",
-			"Acrescente a carne moída e cozinhe até perder a cor rosada, mexendo para soltar os grumos.",
-			"Junte o molho de tomate, tempere com sal, pimenta-do-reino e orégano e cozinhe em fogo baixo por 20 minutos.",
-			"Monte a lasanha alternando molho, massa, presunto e mussarela, terminando com molho e queijo.",
-			"Cubra com papel-alumínio e asse a 180 °C por 30 minutos. Retire o papel e gratine por mais 10 minutos.",
-			"Deixe descansar 10 minutos antes de servir.",
-		],
-		usedProductSlugs: [
-			"alho-triturado-200-g",
-			"oregano",
-			"pimenta-do-reino-em-po",
-		],
-	},
 	{
 		slug: "arroz-a-grega",
 		name: "Arroz à Grega",
@@ -174,6 +101,41 @@ export const RECIPES: readonly Recipe[] = [
 		usedProductSlugs: ["tempero-para-frango", "paprica-doce"],
 	},
 	{
+		slug: "lasanha-a-bolonhesa",
+		name: "Lasanha à Bolonhesa",
+		time: "1 h 20 min",
+		minutes: 80,
+		level: "Média",
+		servings: 6,
+		category: "Jantar",
+		summary:
+			"Camadas de massa, ragu de carne bem temperado e queijo gratinado — o prato que reúne a família à mesa.",
+		image: "/images/recipes/lasanha-a-bolonhesa.jpg",
+		ingredients: [
+			"500 g de massa para lasanha",
+			"700 g de carne moída",
+			"1 cebola picada",
+			"2 colheres de sopa de Alho Triturado São Jorge",
+			"800 g de molho de tomate",
+			"400 g de queijo mussarela fatiado",
+			"200 g de presunto fatiado",
+			"Orégano, sal e pimenta-do-reino a gosto",
+		],
+		steps: [
+			"Refogue a cebola e o alho triturado no azeite até dourarem.",
+			"Acrescente a carne moída e cozinhe até perder a cor rosada, mexendo para soltar os grumos.",
+			"Junte o molho de tomate, tempere com sal, pimenta-do-reino e orégano e cozinhe em fogo baixo por 20 minutos.",
+			"Monte a lasanha alternando molho, massa, presunto e mussarela, terminando com molho e queijo.",
+			"Cubra com papel-alumínio e asse a 180 °C por 30 minutos. Retire o papel e gratine por mais 10 minutos.",
+			"Deixe descansar 10 minutos antes de servir.",
+		],
+		usedProductSlugs: [
+			"alho-triturado-200-g",
+			"oregano",
+			"pimenta-do-reino-em-po",
+		],
+	},
+	{
 		slug: "macarrao-a-primavera",
 		name: "Macarrão à Primavera",
 		time: "30 min",
@@ -202,6 +164,34 @@ export const RECIPES: readonly Recipe[] = [
 			"Finalize com um fio de azeite e sirva imediatamente.",
 		],
 		usedProductSlugs: ["alecrim", "oregano"],
+	},
+	{
+		slug: "macarrao-ao-molho-de-tomate-caseiro",
+		name: "Macarrão ao Molho de Tomate Caseiro",
+		time: "30 min",
+		minutes: 30,
+		level: "Fácil",
+		servings: 4,
+		category: "Almoço",
+		summary:
+			"Um clássico de todo dia: massa al dente, molho de tomate apurado com alho e cebola e manjericão fresco para finalizar.",
+		image: "/images/recipes/macarrao-ao-molho-de-tomate-caseiro.jpg",
+		ingredients: [
+			"500 g de Macarrão Espaguete São Jorge",
+			"1 lata de Molho de Tomate Tradicional São Jorge",
+			"2 dentes de alho picados",
+			"1/2 cebola picada",
+			"2 colheres de azeite",
+			"Sal e pimenta a gosto",
+			"Folhas de manjericão",
+		],
+		steps: [
+			"Cozinhe o macarrão conforme as instruções da embalagem. Escorra e reserve.",
+			"Em uma panela, aqueça o azeite e doure o alho e a cebola.",
+			"Adicione o molho de tomate, tempere com sal e pimenta e deixe cozinhar por 10 minutos, mexendo de vez em quando.",
+			"Misture o macarrão ao molho, finalize com manjericão e sirva.",
+		],
+		usedProductSlugs: ["alho-triturado-200-g", "oregano"],
 	},
 	{
 		slug: "nhoque-ao-molho-de-queijo",

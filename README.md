@@ -41,6 +41,47 @@ artefato de deploy, sem CORS.
 - `lang="pt-BR"`, um `<h1>` por página, skip link e conteúdo renderizado no
   servidor (os 105 produtos saem no HTML, sem depender de JavaScript).
 
+## Arquitetura
+
+O domínio vive em `packages/core` e não conhece banco, HTTP nem React:
+
+```
+packages/core/src/
+├── domain/      # entidades e regras: Slug, Product, Recipe
+├── ports/       # interfaces que o domínio precisa (repositórios)
+├── use-cases/   # orquestração, recebendo as portas por parâmetro
+└── testing/     # adaptadores em memória, para exercitar sem Postgres
+```
+
+`packages/db/src/repositories/` implementa as mesmas portas com Drizzle. É a
+única camada que sabe que existe Postgres — por isso os casos de uso rodam
+idênticos contra memória (35 testes, milissegundos) e contra o banco real
+(11 testes de integração).
+
+### Fluxo do conteúdo
+
+O admin grava no Postgres; o site público não lê banco nenhum. A ponte é um
+comando de publicação:
+
+```bash
+pnpm run catalog:publish
+```
+
+Ele lê o banco e regrava `apps/web/src/data/{products,recipes}.ts`, que é o que
+o build consome. Depois, `pnpm --filter web build` gera o site com o conteúdo
+novo. Os arquivos gerados trazem um aviso no topo e não devem ser editados à
+mão.
+
+Carga inicial, dos arquivos TS para o banco (uma vez só):
+
+```bash
+pnpm run catalog:seed
+```
+
+O `time` das receitas ("1 h 20 min") é derivado de `minutes` na publicação. Eram
+dois campos independentes, e bastava um ficar para trás para a receita exibir um
+tempo e cair no filtro de duração do outro.
+
 ## Organização do código
 
 Componentes têm nomes e arquivos em inglês, um componente por arquivo; o
@@ -195,12 +236,22 @@ pnpm run test:e2e
 
 | Camada | Ferramenta | Onde |
 | --- | --- | --- |
-| Unitário e integração | Vitest (vem no Vite+) | `apps/web/src/**/*.test.ts(x)` |
+| Domínio e casos de uso | Vitest | `packages/core/src/**/*.test.ts` |
+| Adaptadores Drizzle | Vitest + Postgres | `packages/db/src/**/*.integration.test.ts` |
+| Site | Vitest | `apps/web/src/**/*.test.ts(x)` |
 | End-to-end | Playwright | `apps/web/e2e/**/*.spec.ts` |
 
 Os testes de dados e de `lib/` rodam em ambiente Node; só os de componente
 pedem jsdom, com `// @vitest-environment jsdom` no topo do arquivo. Isso mantém
 a suíte unitária em poucos segundos.
+
+Os testes de integração do Drizzle se pulam sozinhos quando não há
+`DATABASE_URL`, então nem o CI nem quem só mexe no site precisa de Postgres.
+Para rodá-los:
+
+```bash
+pnpm run db:start
+```
 
 O e2e roda contra o **build de produção** e **sem `DATABASE_URL`**. Não é
 descuido: o site público não usa banco, e a suíte existe para travar essa

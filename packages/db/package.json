@@ -7,7 +7,8 @@
 		},
 		"./*": {
 			"default": "./src/*.ts"
-		}
+		},
+		"./repositories/*": "./src/repositories/*.ts"
 	},
 	"scripts": {
 		"db:push": "drizzle-kit push",
@@ -18,19 +19,25 @@
 		"db:start": "docker compose up -d",
 		"db:watch": "docker compose up",
 		"db:stop": "docker compose stop",
-		"db:down": "docker compose down"
+		"db:down": "docker compose down",
+		"catalog:seed": "node scripts/seed-catalog.mjs",
+		"catalog:publish": "node scripts/publish-catalog.mjs",
+		"test": "vp test run",
+		"check-types": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@my-better-t-app/env": "workspace:*",
 		"dotenv": "catalog:",
 		"drizzle-orm": "^0.45.2",
 		"pg": "^8.22.0",
-		"zod": "catalog:"
+		"zod": "catalog:",
+		"@my-better-t-app/core": "workspace:*"
 	},
 	"devDependencies": {
 		"@my-better-t-app/config": "workspace:*",
 		"@types/pg": "^8.20.0",
 		"drizzle-kit": "^0.31.10",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "4.1.11"
 	}
 }

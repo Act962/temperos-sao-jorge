@@ -1,0 +1,22 @@
+{
+	"name": "@my-better-t-app/core",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./domain/*": "./src/domain/*.ts",
+		"./ports/*": "./src/ports/*.ts",
+		"./use-cases/*": "./src/use-cases/*.ts",
+		"./testing/*": "./src/testing/*.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit",
+		"test": "vp test run"
+	},
+	"devDependencies": {
+		"@my-better-t-app/config": "workspace:*",
+		"typescript": "catalog:",
+		"vitest": "4.1.11"
+	}
+}
