@@ -108,3 +108,5 @@ alterações.
   - receita sem ingredientes ou passos — `packages/core/src/domain/domain.test.ts`
   - duração derivada de `minutes` — `packages/core/src/domain/domain.test.ts`
   - rotas do painel respondendo sem banco — `apps/web/e2e/admin.spec.ts`
+  - o formulário voltando preenchido, e a recusa chegando à tela, contra
+    Postgres — `apps/web/e2e/com-banco/admin-dados.spec.ts`

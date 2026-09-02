@@ -310,20 +310,44 @@ Para rodá-los:
 pnpm run db:start
 ```
 
-O e2e roda contra o **build de produção** e **sem `DATABASE_URL`**. Não é
-descuido: o site público não usa banco, e a suíte existe para travar essa
-propriedade. Se alguém reintroduzir um import estático de `packages/auth` ou
-`packages/db` numa rota do site, o e2e quebra inteiro.
+O e2e roda contra o **build de produção**, em duas suítes e dois servidores.
 
-As rotas do painel entram na mesma suíte, e pelo mesmo motivo: sem banco elas
-ainda respondem 200 com a tela de acesso. Uma delas devolvendo 500 é o sinal de
-que a casca do admin arrastou o banco para o bundle do site.
+**Sem banco** (porta 3101) é onde vive quase tudo, e não é descuido: o site
+público não usa Postgres, e a suíte existe para travar essa propriedade. Se
+alguém reintroduzir um import estático de `packages/auth` ou `packages/db` numa
+rota do site, ela quebra inteira. O servidor recebe `DATABASE_URL` **vazia** de
+propósito — um `.env` local com banco, ou a variável do job de CI, não conseguem
+afrouxar a única suíte que serve para provar a ausência dele.
+
+As rotas do painel entram aqui também: sem banco elas ainda respondem 200 com a
+tela de acesso. Uma delas devolvendo 500 é o sinal de que a casca do admin
+arrastou o banco para o bundle do site.
+
+**Com banco** (porta 3102) cobre o que não dá para provar sem dado real: o
+painel carregando o catálogo, o filtro de família vindo da URL, o formulário de
+receita voltando preenchido depois de um recarregamento, e a recusa de remover
+um produto citado chegando à tela com a frase do domínio. A expectativa vem dos
+arquivos de `src/data/`, que são a mesma origem do `catalog:seed` — nenhum
+número fica escrito à mão.
+
+Essa segunda suíte só entra quando há `DATABASE_URL`, mesmo critério dos testes
+de integração do Drizzle. Para rodá-la, com o schema já aplicado:
+
+```bash
+pnpm run db:push
+```
+
+O preparo carrega o catálogo e abre uma sessão no painel sozinho; o arquivo de
+sessão fica em `apps/web/e2e/.auth/`, fora do Git.
 
 ### CI
 
 `.github/workflows/ci.yml` roda em push para `main` e em pull request, em dois
 jobs: verificação (`biome ci`, tipos, unitários, build) e, se passar, o
-end-to-end com o relatório do Playwright anexado como artefato.
+end-to-end com o relatório do Playwright anexado como artefato. O job de
+end-to-end sobe um Postgres de serviço, aplica o schema e roda as duas suítes;
+o de verificação continua sem banco, então os testes de integração se pulam
+sozinhos lá.
 
 Os primitivos shadcn em `packages/ui/src/components/` são formatados mas não
 lintados: o CLI do shadcn reescreve esses arquivos, então correção manual se

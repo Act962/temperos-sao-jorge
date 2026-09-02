@@ -58,3 +58,6 @@ dev-dist
 .dev.vars*
 
 .open-next
+
+# Sessão gravada pelo e2e com banco
+e2e/.auth/

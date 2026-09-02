@@ -58,6 +58,29 @@ jobs:
     # motivos.
     needs: verificacao
 
+    # O painel precisa de banco para provar que carrega e grava o catálogo. O
+    # site público continua sem: o servidor da suíte sem banco recebe
+    # `DATABASE_URL` vazia pela configuração do Playwright, então a variável
+    # existir aqui não afrouxa nada.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: saojorge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/saojorge
+      BETTER_AUTH_SECRET: segredo-de-teste-apenas-para-o-ci-do-e2e-0001
+      BETTER_AUTH_URL: http://localhost:3102
+
     steps:
       - uses: actions/checkout@v4
 
@@ -77,8 +100,11 @@ jobs:
       - name: Build
         run: pnpm --filter web build
 
-      # Nenhuma variável de banco é definida de propósito: o site público não
-      # usa Postgres, e a suíte existe justamente para travar essa propriedade.
+      # Aplicar schema é tarefa de migração, não de teste: o preparo da suíte
+      # só carrega o catálogo, e conta encontrar as tabelas prontas.
+      - name: Aplicar o schema
+        run: pnpm run db:push
+
       - name: End-to-end
         run: pnpm --filter web exec playwright test
 

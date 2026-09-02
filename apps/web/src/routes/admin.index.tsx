@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Boxes, CookingPot, Layers } from "lucide-react";
-import type { ComponentType } from "react";
+import { type ComponentType, useId } from "react";
 import { PageHeading } from "@/components/admin/page-heading";
 import { RouteLoader } from "@/components/ui/route-loader";
 import { useTRPC } from "@/utils/trpc";
@@ -17,15 +17,25 @@ interface CartaoProps {
 }
 
 function Cartao({ icone: Icone, rotulo, valor }: CartaoProps) {
+	const idRotulo = useId();
+
 	return (
-		<div className="rounded-lg border border-brand/12 bg-cream-raised p-5">
+		// Sem o grupo rotulado, o número e a palavra são dois textos soltos: quem
+		// usa leitor de tela ouve "105" e "Produtos" sem nada ligando os dois.
+		<div
+			role="group"
+			aria-labelledby={idRotulo}
+			className="rounded-lg border border-brand/12 bg-cream-raised p-5"
+		>
 			<div className="mb-3 flex size-10 items-center justify-center rounded-full bg-brand/8 text-brand">
 				<Icone aria-hidden className="size-5" />
 			</div>
 			<p className="font-display font-extrabold text-[2rem] text-ink tabular-nums leading-none">
 				{valor}
 			</p>
-			<p className="mt-1 font-sans text-ink-muted text-sm">{rotulo}</p>
+			<p id={idRotulo} className="mt-1 font-sans text-ink-muted text-sm">
+				{rotulo}
+			</p>
 		</div>
 	);
 }

@@ -59,6 +59,15 @@ envolvido em `traduzindoErros`, sempre delegando a um caso de uso.
 ## Antes de dar por pronto
 
 Rota nova do painel entra em `ROTAS_PROTEGIDAS` no `apps/web/e2e/admin.spec.ts`.
-A suíte roda **sem `DATABASE_URL`**: a rota tem que responder 200 com a tela de
-acesso. Se responder 500, a casca do painel arrastou o banco para o bundle do
+Essa suíte roda **sem `DATABASE_URL`**: a rota tem que responder 200 com a tela
+de acesso. Se responder 500, a casca do painel arrastou o banco para o bundle do
 site.
+
+Tela que **carrega ou grava** dado ganha também um teste em
+`apps/web/e2e/com-banco/`, que roda contra Postgres de verdade com a sessão já
+aberta. A expectativa vem de `src/data/`, a mesma origem do `catalog:seed` —
+não escreva contagens à mão, que o catálogo cresce.
+
+Se um locator do teste ficar ambíguo, o costume aqui é consertar a marcação, não
+o seletor: um número solto ao lado de um rótulo é ambíguo para o Playwright pelo
+mesmo motivo que é para quem usa leitor de tela.
