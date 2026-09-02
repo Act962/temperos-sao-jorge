@@ -29,7 +29,19 @@ function NovaReceita() {
 			onSuccess: async (receita) => {
 				await queryClient.invalidateQueries();
 				toast.success(`"${receita.name}" criada.`);
-				await navigate({ to: "/admin/receitas" });
+				// Segue para a URL da própria receita em vez de voltar para a
+				// lista: quem acabou de escrever quase sempre tem um ajuste em
+				// seguida, e procurar a receita recém-criada entre as outras para
+				// clicar em editar é trabalho que a tela pode poupar.
+				//
+				// `replace` porque esta tela cumpriu o papel dela: voltar cairia
+				// num formulário de criação já enviado, que reenviaria em
+				// conflito de slug.
+				await navigate({
+					to: "/admin/receitas/$slug",
+					params: { slug: receita.slug },
+					replace: true,
+				});
 			},
 			onError: (e) => setErro(e.message),
 		}),
@@ -53,7 +65,7 @@ function NovaReceita() {
 		<>
 			<PageHeading
 				title="Nova receita"
-				description="Ela entra no site na próxima publicação."
+				description="Depois de salvar ela continua aberta para ajustes, e entra no site na próxima publicação."
 			/>
 			<RecipeForm
 				inicial={RECEITA_VAZIA}

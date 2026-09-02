@@ -134,3 +134,40 @@ test("recusa remover produto citado, com a frase do domínio", async ({
 		page.getByRole("button", { name: `Editar ${citado?.name}` }),
 	).toBeVisible();
 });
+
+test("criar uma receita desemboca na edição dela", async ({ page }) => {
+	const slug = "receita-de-teste-do-e2e";
+	const nome = "Receita de Teste";
+
+	await page.goto("/admin/receitas/nova");
+
+	await page.getByLabel("Slug").fill(slug);
+	await page.getByLabel("Nome").fill(nome);
+	await page.getByLabel("Ingredientes, item 1").fill("1 pitada de sal");
+	await page.getByLabel("Modo de preparo, item 1").fill("Misture tudo.");
+	await page.getByRole("button", { name: "Salvar receita" }).click();
+
+	// O ponto do teste: quem acabou de escrever continua na receita, na URL
+	// dela, em vez de ser mandado de volta para a lista para procurá-la.
+	await expect(page).toHaveURL(new RegExp(`/admin/receitas/${slug}$`));
+	await expect(page.getByRole("heading", { name: nome })).toBeVisible();
+	await expect(page.getByLabel("Ingredientes, item 1")).toHaveValue(
+		"1 pitada de sal",
+	);
+
+	// Voltar cairia num formulário de criação já enviado, que reenviaria em
+	// conflito de slug — por isso a navegação substitui a entrada no histórico.
+	await page.goBack();
+	await expect(page).not.toHaveURL(/\/admin\/receitas\/nova$/);
+
+	// Devolve o banco como estava. A carga do preparo apagaria a sobra na
+	// próxima rodada de qualquer forma, mas um teste que suja o banco e conta
+	// com isso obriga quem for depurar a rodar a suíte inteira. De quebra, a
+	// remoção pela tela também entra na cobertura.
+	page.on("dialog", (dialogo) => dialogo.accept());
+	await page.goto("/admin/receitas");
+	await page.getByRole("button", { name: `Remover ${nome}` }).click();
+	await expect(page.getByRole("link", { name: `Editar ${nome}` })).toHaveCount(
+		0,
+	);
+});

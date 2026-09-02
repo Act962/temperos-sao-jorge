@@ -73,6 +73,9 @@ export default defineConfig({
 						name: "com banco",
 						testMatch: /com-banco\/.*\.spec\.ts/,
 						dependencies: ["preparo"],
+						// Um banco só para todos: quem grava atrapalharia quem conta.
+						// Em série, na ordem do arquivo, as escritas ficam por último.
+						fullyParallel: false,
 						use: {
 							...devices["Desktop Chrome"],
 							baseURL: BASE_URL_COM_BANCO,
