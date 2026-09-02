@@ -47,16 +47,18 @@ O domínio vive em `packages/core` e não conhece banco, HTTP nem React:
 
 ```
 packages/core/src/
-├── domain/      # entidades e regras: Slug, Product, Recipe
-├── ports/       # interfaces que o domínio precisa (repositórios)
+├── domain/      # entidades e regras: Slug, Product, Recipe, ImageKey
+├── ports/       # interfaces que o domínio precisa (repositórios, imagens)
 ├── use-cases/   # orquestração, recebendo as portas por parâmetro
 └── testing/     # adaptadores em memória, para exercitar sem Postgres
 ```
 
-`packages/db/src/repositories/` implementa as mesmas portas com Drizzle. É a
-única camada que sabe que existe Postgres — por isso os casos de uso rodam
-idênticos contra memória (35 testes, milissegundos) e contra o banco real
-(11 testes de integração).
+`packages/db/src/repositories/` implementa as portas do catálogo com Drizzle. É
+a única camada que sabe que existe Postgres — por isso os casos de uso rodam
+idênticos contra memória (milissegundos) e contra o banco real.
+
+`packages/media/` faz o mesmo pelas imagens: guarda em bucket compatível com S3
+e trata com `sharp`. Veja **Imagens** abaixo.
 
 ### Fluxo do conteúdo
 
@@ -189,6 +191,36 @@ Faltam apenas as fotos editoriais e de receitas. A lista completa, com formatos
 sugeridos, está em [`apps/web/ASSETS.md`](apps/web/ASSETS.md); enquanto não
 existirem, cada slot renderiza um placeholder da marca.
 
+### A caminho do object storage
+
+O script resolve o hoje e não escala: a equipe da marca não troca uma foto sem
+Git, e binário versionado fica no histórico para sempre. A decisão está na
+[spec 0004](specs/0004-imagens-no-r2.md) — as fotos vão para o **Cloudflare
+R2**.
+
+A camada de baixo já existe e está testada, mas **ainda não está ligada**: o
+site continua servindo `public/images/` e `Product.image` continua sendo o
+caminho que sempre foi. O que existe é o que a fatia seguinte vai plugar:
+
+| Peça | Onde |
+| --- | --- |
+| Chave, enquadramento e validação do envio | `packages/core/src/domain/image.ts` |
+| Portas `ImageStorage` e `ImageProcessor` | `packages/core/src/ports/image-storage.ts` |
+| Casos de uso | `packages/core/src/use-cases/images.ts` |
+| Adaptador do bucket e do `sharp` | `packages/media/src/` |
+
+O domínio conhece a chave (`products/chas/sachet-melissa.webp`) e nunca o host
+do CDN, que é configuração do adaptador. A chave é o caminho de hoje menos o
+prefixo `/images/`, de propósito: a migração vira uma transformação de string.
+
+O adaptador fala S3 puro, o que permite exercitá-lo contra um MinIO local sem
+conta na Cloudflare. Sem as variáveis `R2_*` (veja `.env.example`) esses testes
+se pulam sozinhos:
+
+```bash
+docker run -d --name sj-minio -p 9000:9000 -e MINIO_ROOT_USER=minio -e MINIO_ROOT_PASSWORD=minio123 minio/minio server /data
+```
+
 ## Como rodar
 
 ```bash
@@ -295,6 +327,8 @@ pnpm run test:e2e
 | --- | --- | --- |
 | Domínio e casos de uso | Vitest | `packages/core/src/**/*.test.ts` |
 | Adaptadores Drizzle | Vitest + Postgres | `packages/db/src/**/*.integration.test.ts` |
+| Tratamento de imagem | Vitest + `sharp` | `packages/media/src/sharp-processor.test.ts` |
+| Adaptador do bucket | Vitest + S3 (MinIO ou R2) | `packages/media/src/**/*.integration.test.ts` |
 | Site | Vitest | `apps/web/src/**/*.test.ts(x)` |
 | End-to-end | Playwright | `apps/web/e2e/**/*.spec.ts` |
 

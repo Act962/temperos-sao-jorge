@@ -1,7 +1,10 @@
 export * from "./domain/errors";
+export * from "./domain/image";
 export * from "./domain/product";
 export * from "./domain/recipe";
 export * from "./domain/slug";
 export type * from "./ports/catalog-repository";
+export type * from "./ports/image-storage";
+export * from "./use-cases/images";
 export * from "./use-cases/products";
 export * from "./use-cases/recipes";
