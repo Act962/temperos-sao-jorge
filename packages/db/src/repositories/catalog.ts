@@ -168,6 +168,21 @@ export class DrizzleRecipeRepository implements RecipeRepository {
 		);
 	}
 
+	async listByProduct(productSlug: Slug): Promise<Recipe[]> {
+		const linhas = await this.db
+			.select({ slug: recipeProduct.recipeSlug })
+			.from(recipeProduct)
+			.where(eq(recipeProduct.productSlug, productSlug))
+			.orderBy(asc(recipeProduct.recipeSlug));
+
+		const receitas: Recipe[] = [];
+		for (const linha of linhas) {
+			const receita = await this.find(comoSlug(linha.slug));
+			if (receita) receitas.push(receita);
+		}
+		return receitas;
+	}
+
 	async find(slug: Slug): Promise<Recipe | null> {
 		const [linha] = await this.db
 			.select()

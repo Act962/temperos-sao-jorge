@@ -24,6 +24,8 @@ export interface ProductRepository {
 
 export interface RecipeRepository {
 	list(): Promise<Recipe[]>;
+	/** Receitas que citam o produto — quem impede apagá-lo. */
+	listByProduct(productSlug: Slug): Promise<Recipe[]>;
 	find(slug: Slug): Promise<Recipe | null>;
 	save(recipe: Recipe): Promise<void>;
 	delete(slug: Slug): Promise<void>;

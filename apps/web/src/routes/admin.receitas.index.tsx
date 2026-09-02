@@ -1,4 +1,5 @@
 import { Badge } from "@my-better-t-app/ui/components/badge";
+import { Button, buttonVariants } from "@my-better-t-app/ui/components/button";
 import {
 	Table,
 	TableBody,
@@ -7,13 +8,15 @@ import {
 	TableHeader,
 	TableRow,
 } from "@my-better-t-app/ui/components/table";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeading } from "@/components/admin/page-heading";
 import { RouteLoader } from "@/components/ui/route-loader";
 import { useTRPC } from "@/utils/trpc";
 
-export const Route = createFileRoute("/admin/receitas")({
+export const Route = createFileRoute("/admin/receitas/")({
 	component: Receitas,
 });
 
@@ -28,7 +31,18 @@ function duracao(minutes: number): string {
 
 function Receitas() {
 	const trpc = useTRPC();
+	const queryClient = useQueryClient();
 	const receitas = useQuery(trpc.catalog.receitas.listar.queryOptions());
+
+	const remover = useMutation(
+		trpc.catalog.receitas.remover.mutationOptions({
+			onSuccess: async () => {
+				await queryClient.invalidateQueries();
+				toast.success("Receita removida.");
+			},
+			onError: (e) => toast.error(e.message),
+		}),
+	);
 
 	if (receitas.isPending) return <RouteLoader />;
 
@@ -44,7 +58,13 @@ function Receitas() {
 		<>
 			<PageHeading
 				title="Receitas"
-				description={`${receitas.data.length} receitas publicadas.`}
+				description={`${receitas.data.length} receitas no catálogo.`}
+				action={
+					<Link to="/admin/receitas/nova" className={buttonVariants()}>
+						<Plus aria-hidden="true" />
+						Nova receita
+					</Link>
+				}
 			/>
 
 			<div className="overflow-x-auto rounded-lg border border-brand/12 bg-cream-raised">
@@ -56,6 +76,7 @@ function Receitas() {
 							<TableHead>Tempo</TableHead>
 							<TableHead>Nível</TableHead>
 							<TableHead className="text-right">Produtos citados</TableHead>
+							<TableHead className="w-24 text-right">Ações</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -79,16 +100,38 @@ function Receitas() {
 								<TableCell className="text-right text-ink-muted tabular-nums">
 									{receita.usedProductSlugs.length}
 								</TableCell>
+								<TableCell className="text-right">
+									<div className="flex justify-end gap-1">
+										<Link
+											to="/admin/receitas/$slug"
+											params={{ slug: receita.slug }}
+											aria-label={`Editar ${receita.name}`}
+											className={buttonVariants({
+												variant: "ghost",
+												size: "icon-sm",
+											})}
+										>
+											<Pencil aria-hidden="true" />
+										</Link>
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											aria-label={`Remover ${receita.name}`}
+											onClick={() => {
+												if (confirm(`Remover "${receita.name}" do catálogo?`)) {
+													remover.mutate({ slug: receita.slug });
+												}
+											}}
+										>
+											<Trash2 aria-hidden="true" />
+										</Button>
+									</div>
+								</TableCell>
 							</TableRow>
 						))}
 					</TableBody>
 				</Table>
 			</div>
-
-			<p className="mt-4 font-sans text-ink-faint text-sm">
-				A edição de receitas entra na próxima fatia. O domínio e a API já
-				suportam criar, atualizar e remover.
-			</p>
 		</>
 	);
 }

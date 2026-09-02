@@ -139,7 +139,7 @@ describe.skipIf(!url)("repositórios Drizzle", () => {
 	});
 
 	it("remove de verdade", async () => {
-		await removerProduto(repos.products, "boldo");
+		await removerProduto(repos, "boldo");
 		await expect(obterProduto(repos.products, "boldo")).rejects.toThrow(
 			NotFoundError,
 		);
@@ -189,6 +189,19 @@ describe.skipIf(!url)("repositórios Drizzle", () => {
 			await expect(
 				criarNovaReceita(repos, { ...base, usedProductSlugs: ["fantasma"] }),
 			).rejects.toThrow(InvalidInputError);
+		});
+
+		it("barra a remoção do produto citado antes do Postgres reclamar", async () => {
+			await criarNovaReceita(repos, {
+				...base,
+				usedProductSlugs: ["camomila"],
+			});
+
+			// O `restrict` da chave estrangeira também barraria, mas com uma
+			// mensagem que ninguém lê. O domínio chega primeiro e nomeia a receita.
+			await expect(removerProduto(repos, "camomila")).rejects.toThrow(
+				/"Chá Gelado" cita este produto/,
+			);
 		});
 
 		it("apaga os vínculos junto com a receita", async () => {

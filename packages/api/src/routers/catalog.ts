@@ -131,7 +131,7 @@ export const catalogRouter = router({
 			.input(z.object({ slug }))
 			.mutation(({ ctx, input }) =>
 				traduzindoErros(async () => {
-					await removerProduto(ctx.repos.products, input.slug);
+					await removerProduto(ctx.repos, input.slug);
 					return { slug: input.slug };
 				}),
 			),

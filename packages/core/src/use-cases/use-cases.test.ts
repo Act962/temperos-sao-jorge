@@ -148,14 +148,59 @@ describe("atualização de produto", () => {
 
 describe("remoção de produto", () => {
 	it("remove e depois não encontra", async () => {
-		await removerProduto(repos.products, "boldo");
+		await removerProduto(repos, "boldo");
 		await expect(obterProduto(repos.products, "boldo")).rejects.toThrow(
 			NotFoundError,
 		);
 	});
 
 	it("falha ao remover o que não existe", async () => {
-		await expect(removerProduto(repos.products, "fantasma")).rejects.toThrow(
+		await expect(removerProduto(repos, "fantasma")).rejects.toThrow(
+			NotFoundError,
+		);
+	});
+
+	it("recusa remover produto citado por receita, nomeando quem cita", async () => {
+		await criarNovaReceita(repos, {
+			slug: "cha-da-tarde",
+			name: "Chá da Tarde",
+			summary: "",
+			minutes: 10,
+			level: "Fácil",
+			servings: 2,
+			category: "Lanches",
+			ingredients: ["Água"],
+			steps: ["Ferver"],
+			usedProductSlugs: ["camomila"],
+		});
+
+		// A mensagem precisa nomear a receita: sem isso o autor não sabe onde
+		// mexer, e o erro do Postgres não diz.
+		await expect(removerProduto(repos, "camomila")).rejects.toThrow(
+			/"Chá da Tarde" cita este produto/,
+		);
+		await expect(removerProduto(repos, "camomila")).rejects.toThrow(
+			ConflictError,
+		);
+	});
+
+	it("libera a remoção depois que a receita deixa de citar", async () => {
+		await criarNovaReceita(repos, {
+			slug: "cha-da-tarde",
+			name: "Chá da Tarde",
+			summary: "",
+			minutes: 10,
+			level: "Fácil",
+			servings: 2,
+			category: "Lanches",
+			ingredients: ["Água"],
+			steps: ["Ferver"],
+			usedProductSlugs: ["camomila"],
+		});
+		await atualizarReceita(repos, "cha-da-tarde", { usedProductSlugs: [] });
+
+		await removerProduto(repos, "camomila");
+		await expect(obterProduto(repos.products, "camomila")).rejects.toThrow(
 			NotFoundError,
 		);
 	});

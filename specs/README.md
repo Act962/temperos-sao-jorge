@@ -33,4 +33,4 @@ ao código.
 | --- | --- | --- |
 | [0001](0001-catalogo-no-banco.md) | Catálogo no Postgres com publicação estática | implementada |
 | [0002](0002-painel-de-produtos.md) | Painel de administração: produtos | implementada |
-| [0003](0003-edicao-de-receitas.md) | Painel de administração: receitas | proposta |
+| [0003](0003-edicao-de-receitas.md) | Painel de administração: receitas | implementada |

@@ -91,7 +91,7 @@ separado. É onde o catálogo é editado antes de publicar.
 | ------------------ | ------------------------------------------------------ |
 | `/admin`           | Visão geral: contagens e produtos por família           |
 | `/admin/produtos`  | Criar, editar e remover produtos                        |
-| `/admin/receitas`  | Lista das receitas (edição na próxima fatia)            |
+| `/admin/receitas`  | Criar, editar e remover receitas                        |
 
 O acesso é por e-mail e senha (Better-Auth). Sem sessão, o formulário de acesso
 ocupa o lugar do conteúdo em vez de redirecionar: entrar em `/admin/produtos`
@@ -103,6 +103,17 @@ Primeiro usuário, com o servidor de pé:
 ```bash
 curl -X POST http://localhost:3000/api/auth/sign-up/email -H "Content-Type: application/json" -d '{"email":"voce@alimentossaojorge.com","password":"trocar-esta-senha","name":"Seu Nome"}'
 ```
+
+Receita se edita em página própria (`/admin/receitas/nova` e
+`/admin/receitas/<slug>`), não em diálogo: doze ingredientes, oito passos e uma
+busca de produtos não cabem numa caixa que rola dentro de outra. As duas listas
+são reordenadas por subir e descer — arrastar exigiria biblioteca e precisão de
+ponteiro, e sumiria para quem usa teclado ou leitor de tela.
+
+Produto citado por alguma receita não pode ser removido. O banco já barra pela
+chave estrangeira, mas quem recusa é o domínio, nomeando as receitas: "Não dá
+para remover 'Alho em Pó': 'Arroz à Grega', 'Nhoque ao Molho de Queijo' citam
+este produto".
 
 As regras não moram na tela. O formulário de produto não confere o caminho do
 packshot nem o formato do slug — quem decide é o domínio em `packages/core`, e a

@@ -8,7 +8,13 @@ import { expect, test } from "@playwright/test";
  * importar `packages/db` de forma estática numa rota, a página nem carrega.
  */
 
-const ROTAS_PROTEGIDAS = ["/admin", "/admin/produtos", "/admin/receitas"];
+const ROTAS_PROTEGIDAS = [
+	"/admin",
+	"/admin/produtos",
+	"/admin/receitas",
+	"/admin/receitas/nova",
+	"/admin/receitas/arroz-a-grega",
+];
 
 test.describe("acesso ao painel", () => {
 	for (const rota of ROTAS_PROTEGIDAS) {

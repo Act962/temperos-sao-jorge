@@ -78,6 +78,12 @@ export class InMemoryRecipeRepository implements RecipeRepository {
 		return [...this.recipes.values()];
 	}
 
+	async listByProduct(productSlug: Slug): Promise<Recipe[]> {
+		return [...this.recipes.values()].filter((receita) =>
+			receita.usedProductSlugs.includes(productSlug),
+		);
+	}
+
 	async find(slug: Slug): Promise<Recipe | null> {
 		return this.recipes.get(slug) ?? null;
 	}

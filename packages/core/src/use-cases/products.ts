@@ -7,7 +7,10 @@ import {
 	type ProductFamily,
 } from "../domain/product";
 import { comoSlug, type Slug } from "../domain/slug";
-import type { ProductRepository } from "../ports/catalog-repository";
+import type {
+	CatalogRepositories,
+	ProductRepository,
+} from "../ports/catalog-repository";
 
 /**
  * Casos de uso do catálogo de produtos.
@@ -105,12 +108,29 @@ export async function atualizarProduto(
 	return atualizado;
 }
 
+/**
+ * Remove um produto, desde que nenhuma receita o cite.
+ *
+ * O banco já barra pela chave estrangeira, mas o erro que ele devolve é
+ * ilegível e a regra sumiria dos testes em memória, que rodam sem Postgres.
+ * Aqui a recusa nomeia as receitas, que é o que o autor precisa saber para
+ * decidir o que fazer.
+ */
 export async function removerProduto(
-	repo: ProductRepository,
+	repos: CatalogRepositories,
 	slug: string,
 ): Promise<void> {
-	await obterProduto(repo, slug);
-	await repo.delete(comoSlug(slug));
+	const produto = await obterProduto(repos.products, slug);
+
+	const receitas = await repos.recipes.listByProduct(produto.slug);
+	if (receitas.length > 0) {
+		const nomes = receitas.map((receita) => `"${receita.name}"`).join(", ");
+		throw new ConflictError(
+			`Não dá para remover "${produto.name}": ${nomes} ${receitas.length === 1 ? "cita" : "citam"} este produto.`,
+		);
+	}
+
+	await repos.products.delete(produto.slug);
 }
 
 export async function criarNovaFamilia(
