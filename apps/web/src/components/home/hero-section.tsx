@@ -15,9 +15,14 @@ export function HeroSection() {
 				className="absolute inset-0 size-full animate-brand-ken-burns object-cover"
 			/>
 
+			{/*
+			 * O véu é vertical no celular e horizontal a partir de md. A versão
+			 * de 90deg some no estreito: o texto passa a cair sobre a parte
+			 * iluminada da foto e perde contraste.
+			 */}
 			<div
 				aria-hidden="true"
-				className="absolute inset-0 bg-[linear-gradient(90deg,rgba(18,10,9,0.94)_0%,rgba(18,10,9,0.72)_38%,rgba(18,10,9,0.15)_66%,rgba(18,10,9,0.05)_100%)]"
+				className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,10,9,0.55)_0%,rgba(18,10,9,0.82)_45%,rgba(18,10,9,0.92)_100%)] md:bg-[linear-gradient(90deg,rgba(18,10,9,0.94)_0%,rgba(18,10,9,0.72)_38%,rgba(18,10,9,0.15)_66%,rgba(18,10,9,0.05)_100%)]"
 			/>
 
 			<div className="shell relative flex h-full flex-col justify-center">
@@ -33,13 +38,21 @@ export function HeroSection() {
 					famílias brasileiras.
 				</p>
 
-				<div className="mt-8 animate-brand-rise [animation-delay:0.34s]">
+				<div className="mt-8 flex animate-brand-rise flex-wrap gap-3 [animation-delay:0.34s]">
 					<BrandLink
-						to="/sobre"
+						to="/produtos"
 						size="lg"
 						className="shadow-[0_6px_20px_rgba(0,0,0,0.35)]"
 					>
-						Conheça nossa história
+						Ver os produtos
+					</BrandLink>
+					<BrandLink
+						to="/sobre"
+						size="lg"
+						variant="light"
+						className="bg-transparent text-[#fff8ec] ring-1 ring-[#fff8ec]/45 ring-inset hover:bg-[#fff8ec] hover:text-brand"
+					>
+						Nossa história
 					</BrandLink>
 				</div>
 			</div>

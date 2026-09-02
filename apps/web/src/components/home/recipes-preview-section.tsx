@@ -1,5 +1,6 @@
 import { RecipeCard } from "@/components/recipes/recipe-card";
 import { BrandLink } from "@/components/ui/brand-button";
+import { CurveDivider } from "@/components/ui/curve-divider";
 import { Reveal } from "@/components/ui/reveal";
 import { Eyebrow, SectionHeading } from "@/components/ui/section-heading";
 import { RECIPES } from "@/data/recipes";
@@ -11,7 +12,10 @@ export function RecipesPreviewSection() {
 	const recipes = RECIPES.slice(0, PREVIEW_COUNT);
 
 	return (
-		<section className="bg-cream pt-21">
+		<section className="relative mt-[-2px] bg-cream pt-21">
+			{/* Terceira passagem entre faixas — as duas anteriores já curvavam. */}
+			<CurveDivider fill="var(--color-cream)" variant="cream" />
+
 			<div className="shell grid items-start gap-14 lg:grid-cols-[0.72fr_2fr]">
 				<div>
 					<Eyebrow className="mb-3.5">Receitas</Eyebrow>

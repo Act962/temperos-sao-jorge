@@ -28,6 +28,14 @@ const OUT_DIR = path.join(WEB, "public/images/products");
 
 /** Longest edge, in pixels. Covers a 260 px tile at 2x device pixel ratio. */
 const MAX_SIZE = 600;
+/**
+ * Margem transparente uniforme em volta do produto já recortado.
+ * Os arquivos originais trazem ~73% de área vazia, o que fazia o sachê
+ * renderizar a ~89 px numa caixa de 150 px. Recortar e repadronizar a margem
+ * deixa todos os produtos no mesmo enquadramento e quase dobra o tamanho
+ * aparente sem mudar uma linha de CSS.
+ */
+const PADDING = 22;
 const WEBP_QUALITY = 82;
 
 const FOLDER_TO_FAMILY = {
@@ -124,10 +132,28 @@ async function main() {
 	let inputBytes = 0;
 	let outputBytes = 0;
 
+	const inner = MAX_SIZE - PADDING * 2;
+	const transparent = { r: 0, g: 0, b: 0, alpha: 0 };
+
 	for (const job of jobs) {
 		await mkdir(path.dirname(job.to), { recursive: true });
 		await sharp(job.from)
-			.resize(MAX_SIZE, MAX_SIZE, { fit: "inside", withoutEnlargement: true })
+			// Descarta a moldura transparente do arquivo original...
+			.trim({ background: transparent, threshold: 10 })
+			// ...encaixa o produto no maior tamanho possível...
+			.resize(inner, inner, {
+				fit: "inside",
+				withoutEnlargement: true,
+				background: transparent,
+			})
+			// ...e devolve a margem, agora igual para todos os produtos.
+			.extend({
+				top: PADDING,
+				bottom: PADDING,
+				left: PADDING,
+				right: PADDING,
+				background: transparent,
+			})
 			.webp({ quality: WEBP_QUALITY, alphaQuality: 100, effort: 6 })
 			.toFile(job.to);
 

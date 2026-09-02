@@ -1,43 +1,43 @@
 import { PRODUCT_FAMILIES, PRODUCTS } from "@/data/products";
 
 /**
- * The four families the home page showcases, each represented by one packshot.
- * Mirrors the selection made on the approved design canvas.
+ * As oito famílias na home, cada uma representada por um packshot.
+ *
+ * O canvas original destacava só quatro; as outras quatro só existiam dentro do
+ * menu suspenso, sem nenhuma porta de entrada para quem não o abrisse.
  */
-const FEATURED = [
-	{ familySlug: "chas", productSlug: "camomila" },
-	{ familySlug: "temperos-em-po", productSlug: "paprica-doce" },
-	{
-		familySlug: "molhos-e-pastas",
-		productSlug: "molho-de-alho-jorge-batista-500-ml",
-	},
-	{
-		familySlug: "temperos-liquidos-prontos",
-		productSlug: "tempero-tradicional-500-ml",
-	},
-] as const;
+const REPRESENTATIVE_PRODUCT: Record<string, string> = {
+	chas: "camomila",
+	"ervas-e-especiarias": "oregano",
+	"farinhas-naturais": "farinha-de-beterraba",
+	institucional: "paprica-doce-1-kg",
+	"molhos-e-pastas": "molho-de-alho-jorge-batista-500-ml",
+	"sementes-e-graos-naturais": "semente-de-chia",
+	"temperos-em-po": "paprica-doce",
+	"temperos-liquidos-prontos": "tempero-tradicional-500-ml",
+};
 
 export interface FeaturedFamily {
 	readonly slug: string;
 	readonly name: string;
+	readonly count: number;
 	readonly image: string;
 	readonly imageAlt: string;
 }
 
-export const FEATURED_FAMILIES: readonly FeaturedFamily[] = FEATURED.flatMap(
-	(entry) => {
-		const family = PRODUCT_FAMILIES.find(
-			(item) => item.slug === entry.familySlug,
+export const FEATURED_FAMILIES: readonly FeaturedFamily[] =
+	PRODUCT_FAMILIES.flatMap((family) => {
+		const product = PRODUCTS.find(
+			(item) => item.slug === REPRESENTATIVE_PRODUCT[family.slug],
 		);
-		const product = PRODUCTS.find((item) => item.slug === entry.productSlug);
-		if (!family || !product) return [];
+		if (!product) return [];
 		return [
 			{
 				slug: family.slug,
 				name: family.name,
+				count: family.count,
 				image: product.image,
 				imageAlt: `${product.name} — linha ${family.name} da São Jorge Alimentos`,
 			},
 		];
-	},
-);
+	});

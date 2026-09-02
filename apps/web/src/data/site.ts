@@ -48,7 +48,25 @@ export const CONTACT = {
 	openingHours: "Segunda a sexta, 8h às 17h",
 	/** schema.org openingHours syntax, mirrors `openingHours` above. */
 	openingHoursSpec: "Mo-Fr 08:00-17:00",
+	/**
+	 * WhatsApp de atendimento. `number` é o formato do wa.me: código do país,
+	 * DDD e número, só dígitos. Deixe vazio para esconder o botão em vez de
+	 * apontar para um número que não atende.
+	 */
+	whatsapp: {
+		number: "5511300000000",
+		display: "(11) 3000-0000",
+		/** Texto que já vem preenchido na conversa. */
+		message: "Olá! Vim pelo site da São Jorge Alimentos.",
+	},
 } as const;
+
+/** Link pronto do WhatsApp, ou null quando não há número configurado. */
+export function whatsappUrl(): string | null {
+	const { number, message } = CONTACT.whatsapp;
+	if (!number) return null;
+	return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+}
 
 export const SOCIAL_LINKS = [
 	{ name: "Instagram", href: "https://www.instagram.com/", icon: "instagram" },

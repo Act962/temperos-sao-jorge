@@ -84,7 +84,8 @@ servidor para redirecionar `www` para o apex, e não o contrário.
 
 A hero e os 105 packshots de produto já estão em `apps/web/public/images/`.
 Os packshots foram convertidos dos originais (PNGs de ~5000×5000, 745 MB no
-total) para WebP de 600 px com transparência — 2,7 MB no total:
+total) para WebP de 600 px de altura, recortados na moldura transparente —
+4,4 MB no total:
 
 ```bash
 pnpm run images:products "C:/caminho/para/FAMILIAS"
@@ -170,7 +171,8 @@ pnpm --filter web exec tsc --noEmit
 
 - Fotos editoriais e de receitas — veja `apps/web/ASSETS.md`.
 - Dados de contato em `src/data/site.ts` ainda são os do design (telefone,
-  endereço e CEP de exemplo).
+  endereço, CEP e o número de WhatsApp são exemplos). O botão de WhatsApp some
+  sozinho se `CONTACT.whatsapp.number` ficar vazio.
 - Formulários de contato e newsletter validam e dão feedback, mas não têm
   backend — procure os `TODO` em `components/contact/contact-form.tsx` e
   `components/layout/newsletter-form.tsx`.

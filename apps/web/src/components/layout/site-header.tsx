@@ -5,7 +5,9 @@ import { useEffect, useId, useState } from "react";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { ProductsMegaMenu } from "@/components/layout/products-mega-menu";
 import { BrandLink } from "@/components/ui/brand-button";
+import { WhatsappIcon } from "@/components/ui/whatsapp-icon";
 import { PRODUCT_FAMILIES } from "@/data/products";
+import { whatsappUrl } from "@/data/site";
 
 const NAV_LINKS = [
 	{ label: "Sobre", to: "/sobre" },
@@ -18,6 +20,7 @@ export function SiteHeader() {
 	const [megaMenuOpen, setMegaMenuOpen] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const mobileNavId = useId();
+	const whatsapp = whatsappUrl();
 
 	// Never leave the mobile drawer open behind a locked body scroll.
 	useEffect(() => {
@@ -112,7 +115,20 @@ export function SiteHeader() {
 					))}
 				</nav>
 
-				<div className="flex items-center gap-3">
+				<div className="flex items-center gap-2.5">
+					{whatsapp ? (
+						<a
+							href={whatsapp}
+							target="_blank"
+							rel="noreferrer noopener"
+							className="inline-flex items-center gap-2 rounded-[4px] border border-brand/25 px-3.5 py-2.5 font-sans font-semibold text-[0.8125rem] text-brand transition-colors hover:bg-brand/8 focus-visible:outline-2 focus-visible:outline-brand-bright focus-visible:outline-offset-2"
+						>
+							<WhatsappIcon className="size-4" />
+							<span className="hidden md:inline">WhatsApp</span>
+							<span className="sr-only md:hidden">Falar no WhatsApp</span>
+						</a>
+					) : null}
+
 					<BrandLink to="/contato" size="sm" className="hidden sm:inline-flex">
 						Fale conosco
 					</BrandLink>

@@ -1,4 +1,5 @@
 import { cn } from "@my-better-t-app/ui/lib/utils";
+import { Link } from "@tanstack/react-router";
 import { type ReactNode, useId, useState } from "react";
 import { toast } from "sonner";
 import { CONTACT_SUBJECTS } from "@/data/site";
@@ -133,10 +134,19 @@ export function ContactForm() {
 				/>
 			</Field>
 
+			<p className="font-sans text-ink-faint text-xs leading-relaxed sm:col-span-2">
+				Ao enviar, você concorda com o tratamento dos seus dados conforme a
+				nossa{" "}
+				<Link to="/privacidade" className="text-brand underline">
+					Política de Privacidade
+				</Link>
+				.
+			</p>
+
 			<button
 				type="submit"
 				disabled={submitting}
-				className="rounded-[4px] bg-brand px-5.5 py-3.5 font-sans font-semibold text-[0.9375rem] text-white transition-colors hover:bg-brand-hover disabled:opacity-60 sm:col-span-2"
+				className="w-full justify-self-start rounded-[4px] bg-brand px-7 py-3.5 font-sans font-semibold text-[0.9375rem] text-white transition-colors hover:bg-brand-hover disabled:opacity-60 sm:col-span-2 sm:w-auto"
 			>
 				Enviar mensagem
 			</button>

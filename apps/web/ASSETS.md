@@ -57,7 +57,12 @@ preservando a transparência:
 pnpm run images:products "C:/caminho/para/FAMILIAS"
 ```
 
-Resultado da última execução: **745 MB → 2,7 MB** (≈ 26 KB por imagem).
+O produto é recortado da moldura transparente e recebe uma margem uniforme de
+22 px, então todos ficam no mesmo enquadramento e ocupam 92% da altura do
+arquivo — antes eram 59%, o que fazia o sachê renderizar a ~89 px numa caixa de
+150 px.
+
+Resultado da última execução: **745 MB → 4,4 MB** (≈ 42 KB por imagem).
 
 Use `--dry-run` para só conferir o mapeamento. O script aborta se a pasta de
 origem e `src/data/products.ts` divergirem, então renomear um arquivo de produto

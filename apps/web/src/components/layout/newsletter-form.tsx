@@ -27,7 +27,7 @@ export function NewsletterForm() {
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className="mt-3.5 flex max-w-100">
+		<form onSubmit={handleSubmit} className="mt-4 flex w-full max-w-100">
 			<label htmlFor={inputId} className="sr-only">
 				Seu melhor e-mail
 			</label>

@@ -5,7 +5,7 @@ import { ProductImage } from "@/components/ui/product-image";
 import { Reveal } from "@/components/ui/reveal";
 import { FEATURED_FAMILIES } from "@/data/home";
 
-/** Red band showing the four highlighted product families. */
+/** Red band showing every product family. */
 export function ProductFamiliesSection() {
 	return (
 		<section className="relative mt-[-2px] bg-brand pt-11 pb-26">
@@ -36,11 +36,11 @@ export function ProductFamiliesSection() {
 									<ProductImage src={family.image} alt={family.imageAlt} />
 								</div>
 								<div className="px-4.5 pt-4 pb-4.5">
-									<h3 className="font-bold font-display text-[1.1875rem] text-ink uppercase tracking-[0.04em]">
+									<h3 className="font-sans font-semibold text-[1.0625rem] text-ink leading-snug">
 										{family.name}
 									</h3>
 									<p className="mt-2 flex items-center gap-2 font-sans font-semibold text-[0.8125rem] text-brand-bright">
-										Ver mais
+										{family.count} produtos
 										<ArrowRight
 											aria-hidden="true"
 											className="size-4 transition-transform group-hover:translate-x-1"

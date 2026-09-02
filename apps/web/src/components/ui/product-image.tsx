@@ -12,10 +12,11 @@ interface ProductImageProps {
 /**
  * Packshot renderer.
  *
- * Packshots are square 600px WebP files with a transparent background,
- * produced by `scripts/optimize-product-images.mjs`. Intrinsic dimensions are
- * declared so the grid reserves space and never shifts layout while loading;
- * a missing file degrades to a quiet branded tile, not a broken-image icon.
+ * Packshots are 600px-tall WebP files on a transparent background, cropped to
+ * the product plus a uniform margin by `scripts/optimize-product-images.mjs`.
+ * Their widths vary with the product, so the grid — not the file — reserves the
+ * space; a missing file degrades to a quiet branded tile, not a broken-image
+ * icon.
  */
 export function ProductImage({
 	src,
@@ -46,8 +47,6 @@ export function ProductImage({
 			alt={alt}
 			loading={loading}
 			decoding="async"
-			width={600}
-			height={600}
 			className={cn("h-full w-full object-contain", className)}
 			{...imageProps}
 		/>
