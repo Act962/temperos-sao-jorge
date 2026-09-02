@@ -60,7 +60,7 @@ function RecipesPage() {
 					description="Encontre a receita perfeita para cada momento."
 				/>
 
-				<div className="mt-8.5 mb-10">
+				<div className="mt-11 mb-12">
 					<FilterChips
 						label="Filtrar receitas"
 						options={FILTER_OPTIONS}

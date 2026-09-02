@@ -22,7 +22,9 @@ export function ProductCatalog({
 			<div className="shell-narrow">
 				<PageHeader title={title} description={description} />
 
-				<div className="mt-8.5">
+				{/* Os filtros são um bloco de duas fileiras: precisam de mais ar dos
+				    dois lados para não colar no texto acima nem na grade abaixo. */}
+				<div className="mt-11">
 					<FamilyFilter activeSlug={activeFamilySlug} />
 				</div>
 
@@ -30,7 +32,7 @@ export function ProductCatalog({
 					{products.length} produtos listados.
 				</p>
 
-				<div className="mt-10">
+				<div className="mt-12">
 					<ProductGrid products={products} />
 				</div>
 			</div>

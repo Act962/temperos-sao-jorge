@@ -29,14 +29,16 @@ export function FilterChips<TValue extends string>({
 	return (
 		<fieldset className={cn("border-0 p-0", className)}>
 			<legend className="sr-only">{label}</legend>
-			<div className="flex flex-wrap justify-center gap-2.5">
+			<div className="flex flex-wrap justify-center gap-x-2.5 gap-y-3">
 				{options.map((option) => {
 					const active = option.value === value;
 					return (
 						<label
 							key={option.value}
 							className={cn(
-								"cursor-pointer rounded-full border border-brand/28 px-4.5 py-2 font-sans font-semibold text-[0.8125rem] transition-colors has-focus-visible:outline-2 has-focus-visible:outline-brand-bright has-focus-visible:outline-offset-2",
+								// inline-flex: num label inline o padding vertical transborda a caixa
+								// de linha e o gap entre as fileiras desaparece.
+								"inline-flex cursor-pointer items-center rounded-full border border-brand/28 px-4.5 py-2 font-sans font-semibold text-[0.8125rem] leading-none transition-colors has-focus-visible:outline-2 has-focus-visible:outline-brand-bright has-focus-visible:outline-offset-2",
 								active
 									? "bg-brand text-cream-fg"
 									: "bg-transparent text-[#6b564c] hover:bg-brand/8",
