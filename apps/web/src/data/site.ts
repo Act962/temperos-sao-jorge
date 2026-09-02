@@ -68,10 +68,26 @@ export function whatsappUrl(): string | null {
 	return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
+/**
+ * Perfis oficiais. Além dos botões do rodapé, esta lista alimenta o `sameAs` do
+ * JSON-LD de Organization — é por ela que o Google associa o site aos perfis.
+ *
+ * Só entram perfis que existem: um link para a raiz da plataforma leva o
+ * visitante para lugar nenhum e enfraquece o `sameAs`. O ícone do YouTube segue
+ * registrado em `social-links.tsx`, então basta acrescentar a entrada aqui
+ * quando o canal existir.
+ */
 export const SOCIAL_LINKS = [
-	{ name: "Instagram", href: "https://www.instagram.com/", icon: "instagram" },
-	{ name: "Facebook", href: "https://www.facebook.com/", icon: "facebook" },
-	{ name: "YouTube", href: "https://www.youtube.com/", icon: "youtube" },
+	{
+		name: "Instagram",
+		href: "https://www.instagram.com/saojorgealimentos/",
+		icon: "instagram",
+	},
+	{
+		name: "Facebook",
+		href: "https://www.facebook.com/profile.php?id=100009943276651",
+		icon: "facebook",
+	},
 ] as const;
 
 export const CONTACT_SUBJECTS = [
