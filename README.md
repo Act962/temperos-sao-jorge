@@ -162,12 +162,14 @@ chave estrangeira, mas quem recusa é o domínio, nomeando as receitas: "Não d�
 para remover 'Alho em Pó': 'Arroz à Grega', 'Nhoque ao Molho de Queijo' citam
 este produto".
 
-As regras não moram na tela. O formulário de produto não confere o caminho do
-packshot nem o formato do slug — quem decide é o domínio em `packages/core`, e a
-mensagem dele aparece no lugar do erro. Mudar um chá para a família de ervas sem
-mover a foto responde, na própria tela, *"O packshot de 'Melissa' está na pasta
-de outra família"*. Duplicar a regra no formulário criaria uma segunda verdade
-para manter em sincronia.
+As regras não moram na tela. O formulário de produto não confere o nome nem o
+formato do slug — quem decide é o domínio em `packages/core`, e a mensagem dele
+aparece no lugar do erro. Criar um produto com o nome de outro responde, na
+própria tela, com a recusa do domínio. Duplicar a regra no formulário criaria
+uma segunda verdade para manter em sincronia.
+
+A foto do produto e a da receita são enviadas pelo próprio formulário — veja
+**Imagens**.
 
 ## Organização do código
 
@@ -236,35 +238,64 @@ Faltam apenas as fotos editoriais e de receitas. A lista completa, com formatos
 sugeridos, está em [`apps/web/ASSETS.md`](apps/web/ASSETS.md); enquanto não
 existirem, cada slot renderiza um placeholder da marca.
 
-### A caminho do object storage
+### Fotos enviadas pelo painel
 
-O script resolve o hoje e não escala: a equipe da marca não troca uma foto sem
-Git, e binário versionado fica no histórico para sempre. A decisão está na
-[spec 0004](specs/0004-imagens-no-r2.md) — as fotos vão para o **Cloudflare
-R2**.
+Produto e receita têm um campo de foto no painel
+([spec 0010](specs/0010-envio-de-fotos-pelo-painel.md)). As fotos enviadas vão
+para um bucket no **Cloudflare R2** ([spec 0004](specs/0004-imagens-no-r2.md))
+e são servidas de lá; as 105 que já existiam continuam em `public/images/`.
 
-A camada de baixo já existe e está testada, mas **ainda não está ligada**: o
-site continua servindo `public/images/` e `Product.image` continua sendo o
-caminho que sempre foi. O que existe é o que a fatia seguinte vai plugar:
+O campo `image` guarda um dos dois: o caminho antigo
+(`/images/products/chas/sachet-melissa.webp`) ou a chave do bucket
+(`products/chas/sachet-melissa-m3k9x2.webp`). Quem transforma em endereço é
+`urlDaImagem`, em `packages/core` — o domínio conhece a chave e nunca o host do
+CDN, que é configuração.
+
+O caminho de uma foto:
+
+1. Quem edita escolhe o arquivo e clica em **Salvar**. Nada sobe antes disso.
+2. O navegador reduz a foto para no máximo 2000 px. A Vercel recusa requisição
+   acima de 4,5 MB, e os originais da marca têm de 3 a 9 MB.
+3. A rota `/api/admin/fotos` trata com `sharp` e guarda no bucket: packshot é
+   recortado na moldura transparente e fechado em 600 px; foto de receita vai
+   para 1600 px, sem recorte.
+4. O produto ou a receita é gravado com a chave nova, e a foto anterior é
+   apagada do bucket.
+
+A chave leva uma **versão** no nome, gerada a cada envio. As fotos saem do
+bucket com cache de um ano, então trocar a foto precisa trocar o endereço —
+senão quem já visitou o site continuaria vendo a antiga.
 
 | Peça | Onde |
 | --- | --- |
-| Chave, enquadramento e validação do envio | `packages/core/src/domain/image.ts` |
+| Chave, enquadramento, endereço e validação | `packages/core/src/domain/image.ts` |
 | Portas `ImageStorage` e `ImageProcessor` | `packages/core/src/ports/image-storage.ts` |
 | Casos de uso | `packages/core/src/use-cases/images.ts` |
 | Adaptador do bucket e do `sharp` | `packages/media/src/` |
+| Rota de envio | `packages/api/src/photo-upload.ts` |
+| Campo de foto e redução no navegador | `apps/web/src/components/admin/photo{,-field}.tsx` |
 
-O domínio conhece a chave (`products/chas/sachet-melissa.webp`) e nunca o host
-do CDN, que é configuração do adaptador. A chave é o caminho de hoje menos o
-prefixo `/images/`, de propósito: a migração vira uma transformação de string.
+**O bucket é opcional.** Sem as variáveis `R2_*` (veja `.env.example`) o site e
+o painel funcionam como antes; o campo de foto aparece desligado, com a
+explicação. Em produção, as variáveis entram no projeto da Vercel.
 
-O adaptador fala S3 puro, o que permite exercitá-lo contra um MinIO local sem
-conta na Cloudflare. Sem as variáveis `R2_*` (veja `.env.example`) esses testes
-se pulam sozinhos:
+Para exercitar o envio na sua máquina, sem conta na Cloudflare, suba um MinIO
+— ele fala a mesma API do R2:
 
 ```bash
-docker run -d --name sj-minio -p 9000:9000 -e MINIO_ROOT_USER=minio -e MINIO_ROOT_PASSWORD=minio123 minio/minio server /data
+docker run -d --name sj-minio -p 9000:9000 -e MINIO_ROOT_USER=saojorge -e MINIO_ROOT_PASSWORD=saojorge-local minio/minio server /data
 ```
+
+Com `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` e
+`R2_PUBLIC_URL` (`http://localhost:9000/<bucket>`) no ambiente, crie o bucket
+com leitura pública:
+
+```bash
+pnpm run images:local-bucket
+```
+
+Com as mesmas variáveis, os testes do adaptador em `packages/media` e o e2e de
+envio (`apps/web/e2e/com-banco/admin-fotos.spec.ts`) deixam de se pular.
 
 ## Como rodar
 
@@ -347,7 +378,9 @@ São o resumo do que este README explica por extenso, no ponto em que a decisão
 ## Deploy
 
 O app vai para a **Vercel**; a Cloudflare entra só com R2 e CDN das imagens
-(veja a [spec 0005](specs/0005-upload-de-imagens-no-painel.md)).
+(veja a [spec 0010](specs/0010-envio-de-fotos-pelo-painel.md)). `sharp` é
+binário nativo e viaja dentro da função: por isso é dependência direta de
+`apps/web`, o que o mantém fora do bundle e ao alcance do rastreio de arquivos.
 
 Esta versão do TanStack Start não tem alvo de Vercel: `vp build` gera
 `dist/client` (estático) e `dist/server/server.js`, que exporta um handler

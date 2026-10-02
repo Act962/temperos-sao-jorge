@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { PageHeading } from "@/components/admin/page-heading";
+import { descartarFoto, resolverFoto } from "@/components/admin/photo";
 import {
 	type ReceitaFormulario,
 	RecipeForm,
@@ -19,6 +20,7 @@ function EditarReceita() {
 	const queryClient = useQueryClient();
 	const { slug } = Route.useParams();
 	const [erro, setErro] = useState<string | null>(null);
+	const [enviandoFoto, setEnviandoFoto] = useState(false);
 
 	const receita = useQuery(trpc.catalog.receitas.obter.queryOptions({ slug }));
 	const produtos = useQuery(trpc.catalog.produtos.listar.queryOptions());
@@ -54,23 +56,46 @@ function EditarReceita() {
 
 	const atual = receita.data;
 
-	const salvar = (dados: ReceitaFormulario) => {
+	const salvar = async (dados: ReceitaFormulario) => {
 		setErro(null);
-		atualizar.mutate({
-			slug: atual.slug,
-			dados: {
-				name: dados.name,
-				summary: dados.summary,
-				minutes: dados.minutes,
-				level: dados.level,
-				servings: dados.servings,
-				category: dados.category,
-				image: dados.image === "" ? null : dados.image,
-				ingredients: dados.ingredients,
-				steps: dados.steps,
-				usedProductSlugs: dados.usedProductSlugs,
+
+		// Primeiro a foto, depois a receita apontando para ela. Se a foto não
+		// sobe, nada é gravado e o motivo aparece no fim do formulário.
+		setEnviandoFoto(true);
+		const foto = await resolverFoto(dados.foto, {
+			alvo: "receita",
+			nome: dados.slug,
+		})
+			.catch((falha: unknown) => {
+				setErro(
+					falha instanceof Error
+						? falha.message
+						: "Não foi possível enviar a foto.",
+				);
+				return null;
+			})
+			.finally(() => setEnviandoFoto(false));
+		if (foto === null) return;
+
+		atualizar.mutate(
+			{
+				slug: atual.slug,
+				dados: {
+					name: dados.name,
+					summary: dados.summary,
+					minutes: dados.minutes,
+					level: dados.level,
+					servings: dados.servings,
+					category: dados.category,
+					image: foto.image,
+					ingredients: dados.ingredients,
+					steps: dados.steps,
+					usedProductSlugs: dados.usedProductSlugs,
+				},
 			},
-		});
+			// A gravação falhou com a foto já no bucket: ela não tem dono, sai.
+			{ onError: () => descartarFoto(foto.enviada) },
+		);
 	};
 
 	return (
@@ -81,8 +106,10 @@ function EditarReceita() {
 			/>
 			<RecipeForm
 				// A receita carregada é o estado inicial do formulário. A chave força
-				// remontar quando a rota troca de slug sem desmontar o componente.
-				key={atual.slug}
+				// remontar quando a rota troca de slug sem desmontar o componente — e
+				// quando a foto salva muda, para o campo largar o arquivo que acabou
+				// de subir e passar a mostrar a foto do bucket.
+				key={`${atual.slug}:${atual.image ?? ""}`}
 				inicial={{
 					slug: atual.slug,
 					name: atual.name,
@@ -91,14 +118,14 @@ function EditarReceita() {
 					level: atual.level,
 					servings: atual.servings,
 					category: atual.category,
-					image: atual.image ?? "",
+					foto: { atual: atual.image ?? "", nova: null },
 					ingredients: [...atual.ingredients],
 					steps: [...atual.steps],
 					usedProductSlugs: [...atual.usedProductSlugs],
 				}}
 				editando
 				catalogo={produtos.data}
-				enviando={atualizar.isPending}
+				enviando={enviandoFoto || atualizar.isPending}
 				erro={erro}
 				aoSalvar={salvar}
 			/>

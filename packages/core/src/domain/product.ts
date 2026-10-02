@@ -1,4 +1,5 @@
 import { InvalidInputError } from "./errors";
+import { ehCaminhoAntigo, ehChaveDeImagem } from "./image";
 import { comoSlug, type Slug } from "./slug";
 
 export interface ProductFamily {
@@ -12,7 +13,10 @@ export interface Product {
 	readonly slug: Slug;
 	readonly name: string;
 	readonly familySlug: Slug;
-	/** Caminho público do packshot, ou null enquanto a foto não existir. */
+	/**
+	 * O packshot: caminho antigo em `public/`, chave do bucket, ou null enquanto
+	 * a foto não existir. Quem transforma em endereço é `urlDaImagem`.
+	 */
 	readonly image: string | null;
 	readonly position: number;
 }
@@ -28,13 +32,41 @@ export interface NovoProduto {
 const CAMINHO_PACKSHOT = /^\/images\/products\/[a-z0-9-]+\/[a-z0-9-]+\.webp$/;
 
 /**
- * Constrói um produto válido.
+ * Confere o packshot de um produto.
  *
- * O caminho do packshot é verificado contra o formato que
- * `scripts/optimize-product-images.mjs` grava. Divergir não quebra nada de
- * imediato: o site simplesmente mostra um placeholder no lugar do produto, o
- * que passa despercebido até alguém abrir a página.
+ * O caminho antigo é verificado contra o formato que
+ * `scripts/optimize-product-images.mjs` grava, e contra a pasta da família:
+ * foi digitado à mão, e divergir não quebra nada de imediato — o site só
+ * mostra um placeholder, o que passa despercebido até alguém abrir a página.
+ *
+ * A chave do bucket não passa pela conferência da família (spec 0010): a foto
+ * foi enviada para este produto, e exigir a pasta obrigaria a reenviá-la toda
+ * vez que o produto muda de família.
  */
+function conferirPackshot(image: string, name: string, familySlug: string) {
+	if (!ehCaminhoAntigo(image)) {
+		if (!ehChaveDeImagem(image) || !image.startsWith("products/")) {
+			throw new InvalidInputError(
+				`Foto de "${name}" fora do padrão: "${image}". Esperado /images/products/<familia>/<slug>.webp ou a chave de uma foto enviada pelo painel.`,
+			);
+		}
+		return;
+	}
+
+	if (!CAMINHO_PACKSHOT.test(image)) {
+		throw new InvalidInputError(
+			`Caminho de packshot fora do padrão: "${image}". Esperado /images/products/<familia>/<slug>.webp`,
+		);
+	}
+
+	if (!image.startsWith(`/images/products/${familySlug}/`)) {
+		throw new InvalidInputError(
+			`O packshot de "${name}" está na pasta de outra família: ${image}`,
+		);
+	}
+}
+
+/** Constrói um produto válido. */
 export function criarProduto(entrada: NovoProduto): Product {
 	const name = entrada.name.trim();
 	if (name === "") {
@@ -42,19 +74,8 @@ export function criarProduto(entrada: NovoProduto): Product {
 	}
 
 	const image = entrada.image ?? null;
-	if (image !== null && !CAMINHO_PACKSHOT.test(image)) {
-		throw new InvalidInputError(
-			`Caminho de packshot fora do padrão: "${image}". Esperado /images/products/<familia>/<slug>.webp`,
-		);
-	}
-
 	const familySlug = comoSlug(entrada.familySlug);
-
-	if (image !== null && !image.startsWith(`/images/products/${familySlug}/`)) {
-		throw new InvalidInputError(
-			`O packshot de "${name}" está na pasta de outra família: ${image}`,
-		);
-	}
+	if (image !== null) conferirPackshot(image, name, familySlug);
 
 	return {
 		slug: comoSlug(entrada.slug),

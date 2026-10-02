@@ -85,6 +85,13 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/saojorge
       BETTER_AUTH_SECRET: segredo-de-teste-apenas-para-o-ci-do-e2e-0001
       BETTER_AUTH_URL: http://localhost:3102
+      # Bucket das fotos: um MinIO que só existe durante o job. As credenciais
+      # são as que o próprio job dá ao contêiner logo abaixo, não um segredo.
+      R2_ENDPOINT: http://localhost:9000
+      R2_BUCKET: sao-jorge-e2e
+      R2_ACCESS_KEY_ID: saojorge
+      R2_SECRET_ACCESS_KEY: saojorge-e2e-do-ci
+      R2_PUBLIC_URL: http://localhost:9000/sao-jorge-e2e
 
     steps:
       - uses: actions/checkout@v4
@@ -104,6 +111,20 @@ jobs:
 
       - name: Build
         run: pnpm --filter web build
+
+      # Como passo, e não em `services`: a imagem do MinIO precisa do comando
+      # `server /data`, e um serviço do Actions não aceita comando.
+      - name: Subir o bucket das fotos
+        run: |
+          docker run -d --name fotos -p 9000:9000 \
+            -e MINIO_ROOT_USER="$R2_ACCESS_KEY_ID" \
+            -e MINIO_ROOT_PASSWORD="$R2_SECRET_ACCESS_KEY" \
+            minio/minio server /data
+          for tentativa in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live && break
+            sleep 1
+          done
+          pnpm run images:local-bucket
 
       # O preparo da suíte aplica o schema e carrega o catálogo: basta o
       # Postgres do serviço estar de pé, vazio.

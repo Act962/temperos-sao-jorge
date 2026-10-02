@@ -1,3 +1,4 @@
+import { urlDaImagem } from "@my-better-t-app/core";
 import { Button } from "@my-better-t-app/ui/components/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
@@ -9,6 +10,7 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { filtrarPorTermo } from "@/components/admin/filtro";
 import { ItemList, ItemRow } from "@/components/admin/item-list";
 import { PageHeading } from "@/components/admin/page-heading";
+import { descartarFoto, resolverFoto } from "@/components/admin/photo";
 import {
 	ProductDialog,
 	type ProdutoFormulario,
@@ -87,8 +89,8 @@ function Ficha({ filtro, ativa, children }: FichaProps) {
 	);
 }
 
-function Miniatura({ src }: { src: string | null }) {
-	if (!src) {
+function Miniatura({ src }: { src: string }) {
+	if (src === "") {
 		return (
 			<span className="flex size-11 items-center justify-center rounded-md border border-brand/30 border-dashed text-center font-sans text-[0.625rem] text-ink-faint leading-tight">
 				sem foto
@@ -115,6 +117,8 @@ function Produtos() {
 		{ aberto: false } | { aberto: true; inicial?: ProdutoFormulario }
 	>({ aberto: false });
 	const [erro, setErro] = useState<string | null>(null);
+	// A foto sobe antes da gravação; enquanto isso o diálogo já está "salvando".
+	const [enviandoFoto, setEnviandoFoto] = useState(false);
 	const [remocao, setRemocao] = useState<{
 		slug: string;
 		name: string;
@@ -124,6 +128,11 @@ function Produtos() {
 	// e uma ida ao servidor por tecla só acrescentaria espera à busca.
 	const produtos = useQuery(trpc.catalog.produtos.listar.queryOptions());
 	const familias = useQuery(trpc.catalog.familias.listar.queryOptions());
+	// Para a miniatura: foto guardada por chave precisa do endereço do bucket.
+	const imagens = useQuery({
+		...trpc.imagens.estado.queryOptions(),
+		staleTime: Number.POSITIVE_INFINITY,
+	});
 
 	/** Recarrega listas e resumo após qualquer escrita. */
 	const revalidar = () => queryClient.invalidateQueries();
@@ -184,18 +193,41 @@ function Produtos() {
 	const visiveis = filtrarPorTermo(comFiltroDeFoto, busca, (p) => p.name);
 	const filtrando = Boolean(familia || busca || semFoto);
 
-	const salvar = (dados: ProdutoFormulario) => {
+	const salvar = async (dados: ProdutoFormulario) => {
 		setErro(null);
-		const image = dados.image === "" ? null : dados.image;
+
+		// Primeiro a foto, depois o produto apontando para ela. Se a foto não
+		// sobe, nada é gravado e o diálogo continua aberto com o motivo.
+		setEnviandoFoto(true);
+		const foto = await resolverFoto(dados.foto, {
+			alvo: "produto",
+			familia: dados.familySlug,
+			nome: dados.name,
+		})
+			.catch((falha: unknown) => {
+				setErro(
+					falha instanceof Error
+						? falha.message
+						: "Não foi possível enviar a foto.",
+				);
+				return null;
+			})
+			.finally(() => setEnviandoFoto(false));
+		if (foto === null) return;
+
+		// A gravação falhou com a foto já no bucket: ela não tem dono, sai.
+		const desfazer = { onError: () => descartarFoto(foto.enviada) };
+		const campos = {
+			name: dados.name,
+			familySlug: dados.familySlug,
+			image: foto.image,
+		};
 
 		if (dados.slug) {
-			atualizar.mutate({
-				slug: dados.slug,
-				dados: { name: dados.name, familySlug: dados.familySlug, image },
-			});
+			atualizar.mutate({ slug: dados.slug, dados: campos }, desfazer);
 			return;
 		}
-		criar.mutate({ name: dados.name, familySlug: dados.familySlug, image });
+		criar.mutate(campos, desfazer);
 	};
 
 	return (
@@ -290,7 +322,11 @@ function Produtos() {
 					{visiveis.map((produto) => (
 						<ItemRow
 							key={produto.slug}
-							midia={<Miniatura src={produto.image} />}
+							midia={
+								<Miniatura
+									src={urlDaImagem(produto.image, imagens.data?.base)}
+								/>
+							}
 							titulo={produto.name}
 							detalhes={[
 								nomeDaFamilia.get(produto.familySlug) ?? produto.familySlug,
@@ -309,7 +345,7 @@ function Produtos() {
 													slug: produto.slug,
 													name: produto.name,
 													familySlug: produto.familySlug,
-													image: produto.image ?? "",
+													foto: { atual: produto.image ?? "", nova: null },
 												},
 											});
 										}}
@@ -340,7 +376,7 @@ function Produtos() {
 					inicial={dialogo.inicial}
 					familiaSugerida={familiaAtiva?.slug}
 					familias={familias.data}
-					enviando={criar.isPending || atualizar.isPending}
+					enviando={enviandoFoto || criar.isPending || atualizar.isPending}
 					erro={erro}
 					aoSalvar={salvar}
 				/>

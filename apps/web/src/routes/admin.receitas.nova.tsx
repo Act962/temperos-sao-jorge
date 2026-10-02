@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { PageHeading } from "@/components/admin/page-heading";
+import { descartarFoto, resolverFoto } from "@/components/admin/photo";
 import {
 	RECEITA_VAZIA,
 	type ReceitaFormulario,
@@ -20,6 +21,7 @@ function NovaReceita() {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 	const [erro, setErro] = useState<string | null>(null);
+	const [enviandoFoto, setEnviandoFoto] = useState(false);
 
 	// O formulário precisa do catálogo para a busca de produtos citados.
 	const produtos = useQuery(trpc.catalog.produtos.listar.queryOptions());
@@ -56,9 +58,44 @@ function NovaReceita() {
 		);
 	}
 
-	const salvar = (dados: ReceitaFormulario) => {
+	const salvar = async (dados: ReceitaFormulario) => {
 		setErro(null);
-		criar.mutate({ ...dados, image: dados.image === "" ? null : dados.image });
+
+		// Primeiro a foto, depois a receita apontando para ela. Se a foto não
+		// sobe, nada é gravado e o motivo aparece no fim do formulário.
+		setEnviandoFoto(true);
+		const foto = await resolverFoto(dados.foto, {
+			alvo: "receita",
+			nome: dados.slug,
+		})
+			.catch((falha: unknown) => {
+				setErro(
+					falha instanceof Error
+						? falha.message
+						: "Não foi possível enviar a foto.",
+				);
+				return null;
+			})
+			.finally(() => setEnviandoFoto(false));
+		if (foto === null) return;
+
+		criar.mutate(
+			{
+				slug: dados.slug,
+				name: dados.name,
+				summary: dados.summary,
+				minutes: dados.minutes,
+				level: dados.level,
+				servings: dados.servings,
+				category: dados.category,
+				image: foto.image,
+				ingredients: dados.ingredients,
+				steps: dados.steps,
+				usedProductSlugs: dados.usedProductSlugs,
+			},
+			// A gravação falhou com a foto já no bucket: ela não tem dono, sai.
+			{ onError: () => descartarFoto(foto.enviada) },
+		);
 	};
 
 	return (
@@ -71,7 +108,7 @@ function NovaReceita() {
 				inicial={RECEITA_VAZIA}
 				editando={false}
 				catalogo={produtos.data}
-				enviando={criar.isPending}
+				enviando={enviandoFoto || criar.isPending}
 				erro={erro}
 				aoSalvar={salvar}
 			/>

@@ -5,6 +5,7 @@ import {
 	criarNovaFamilia,
 	criarNovaReceita,
 	criarNovoProduto,
+	descartarFotoSubstituida,
 	listarFamiliasComContagem,
 	listarProdutos,
 	listarProdutosDaFamilia,
@@ -19,6 +20,7 @@ import {
 	reordenarFamilias,
 } from "@my-better-t-app/core";
 import { z } from "zod";
+import type { Context } from "../context";
 import { traduzindoErros } from "../errors";
 import { protectedProcedure, publicProcedure, router } from "../index";
 
@@ -37,6 +39,30 @@ const slug = z
 		/^[a-z0-9]+(?:-[a-z0-9]+)*$/,
 		"Use minúsculas, números e hífen simples.",
 	);
+
+/**
+ * Tira do bucket a foto que a gravação acabou de deixar sem uso.
+ *
+ * Roda depois que o banco já aceitou a mudança, e uma falha aqui não a desfaz:
+ * arquivo sobrando no bucket não aparece para ninguém, enquanto desfazer a
+ * gravação faria quem editou perder o trabalho por causa de uma limpeza.
+ */
+async function limparFoto(
+	ctx: Context,
+	anterior: string | null,
+	atual: string | null,
+): Promise<void> {
+	if (anterior === null || anterior === atual) return;
+
+	try {
+		const servicos = await ctx.imagens();
+		if (servicos) {
+			await descartarFotoSubstituida(servicos.storage, anterior, atual);
+		}
+	} catch (erro) {
+		console.error(`[fotos] não foi possível apagar "${anterior}"`, erro);
+	}
+}
 
 const produtoEntrada = {
 	name: z.string().min(1),
@@ -57,6 +83,21 @@ const receitaEntrada = {
 	steps: z.array(z.string().min(1)).min(1),
 	usedProductSlugs: z.array(slug).default([]),
 };
+
+/**
+ * Alteração parcial de receita: os mesmos campos, sem os valores padrão.
+ *
+ * `partial()` sobre um campo com `default` não o deixa ausente — preenche com o
+ * padrão. Uma alteração que só trocasse a foto chegaria ao caso de uso com
+ * resumo vazio e lista de produtos vazia, e apagaria os dois da receita.
+ */
+const receitaAlteracoes = z
+	.object({
+		...receitaEntrada,
+		summary: z.string(),
+		usedProductSlugs: z.array(slug),
+	})
+	.partial();
 
 export const catalogRouter = router({
 	// Leitura liberada: alimenta a publicação estática, que não tem sessão.
@@ -155,16 +196,25 @@ export const catalogRouter = router({
 				}),
 			)
 			.mutation(({ ctx, input }) =>
-				traduzindoErros(() =>
-					atualizarProduto(ctx.repos.products, input.slug, input.dados),
-				),
+				traduzindoErros(async () => {
+					const anterior = await obterProduto(ctx.repos.products, input.slug);
+					const atualizado = await atualizarProduto(
+						ctx.repos.products,
+						input.slug,
+						input.dados,
+					);
+					await limparFoto(ctx, anterior.image, atualizado.image);
+					return atualizado;
+				}),
 			),
 
 		remover: protectedProcedure
 			.input(z.object({ slug }))
 			.mutation(({ ctx, input }) =>
 				traduzindoErros(async () => {
+					const produto = await obterProduto(ctx.repos.products, input.slug);
 					await removerProduto(ctx.repos, input.slug);
+					await limparFoto(ctx, produto.image, null);
 					return { slug: input.slug };
 				}),
 			),
@@ -191,20 +241,29 @@ export const catalogRouter = router({
 			.input(
 				z.object({
 					slug,
-					dados: z.object(receitaEntrada).partial(),
+					dados: receitaAlteracoes,
 				}),
 			)
 			.mutation(({ ctx, input }) =>
-				traduzindoErros(() =>
-					atualizarReceita(ctx.repos, input.slug, input.dados),
-				),
+				traduzindoErros(async () => {
+					const anterior = await obterReceita(ctx.repos.recipes, input.slug);
+					const atualizada = await atualizarReceita(
+						ctx.repos,
+						input.slug,
+						input.dados,
+					);
+					await limparFoto(ctx, anterior.image, atualizada.image);
+					return atualizada;
+				}),
 			),
 
 		remover: protectedProcedure
 			.input(z.object({ slug }))
 			.mutation(({ ctx, input }) =>
 				traduzindoErros(async () => {
+					const receita = await obterReceita(ctx.repos.recipes, input.slug);
 					await removerReceita(ctx.repos.recipes, input.slug);
+					await limparFoto(ctx, receita.image, null);
 					return { slug: input.slug };
 				}),
 			),

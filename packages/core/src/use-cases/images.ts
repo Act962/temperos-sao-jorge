@@ -2,6 +2,7 @@ import { InvalidInputError, NotFoundError } from "../domain/errors";
 import {
 	chaveDePackshot,
 	chaveDeReceita,
+	ehChaveDeImagem,
 	familiaDaChave,
 	type ImageKey,
 	validarEnvio,
@@ -26,6 +27,19 @@ export interface EnvioDePackshot {
 	slug: string;
 	contentType: string;
 	corpo: Uint8Array;
+	/** Distingue este envio do anterior. Veja `chaveDePackshot`. */
+	versao?: string;
+}
+
+/**
+ * Versão para um envio feito agora.
+ *
+ * O instante garante a ordem e o trecho aleatório separa dois envios do mesmo
+ * milissegundo. Não precisa ser imprevisível: o endereço da foto é público.
+ */
+export function novaVersaoDeImagem(agora: number = Date.now()): string {
+	const acaso = Math.random().toString(36).slice(2, 6).padEnd(4, "0");
+	return `${agora.toString(36)}${acaso}`;
 }
 
 export async function guardarPackshot(
@@ -34,7 +48,7 @@ export async function guardarPackshot(
 ): Promise<ImagemGuardada> {
 	validarEnvio({ contentType: envio.contentType, tamanho: envio.corpo.length });
 
-	const key = chaveDePackshot(envio.familySlug, envio.slug);
+	const key = chaveDePackshot(envio.familySlug, envio.slug, envio.versao);
 	const tratado = await servicos.processor.paraPackshot(envio.corpo);
 
 	// Sempre WebP na saída, qualquer que tenha sido a entrada: é o que a chave
@@ -44,13 +58,41 @@ export async function guardarPackshot(
 
 export async function guardarFotoDeReceita(
 	servicos: ImageServices,
-	envio: { slug: string; contentType: string; corpo: Uint8Array },
+	envio: {
+		slug: string;
+		contentType: string;
+		corpo: Uint8Array;
+		versao?: string;
+	},
 ): Promise<ImagemGuardada> {
 	validarEnvio({ contentType: envio.contentType, tamanho: envio.corpo.length });
 
-	const key = chaveDeReceita(envio.slug);
-	const tratado = await servicos.processor.paraPackshot(envio.corpo);
+	const key = chaveDeReceita(envio.slug, envio.versao);
+	// Tratamento próprio: foto de prato não tem moldura transparente para
+	// recortar e aparece maior que um packshot (spec 0010).
+	const tratado = await servicos.processor.paraFotoDeReceita(envio.corpo);
 	return servicos.storage.guardar(key, tratado, "image/webp");
+}
+
+/**
+ * Apaga do bucket a foto que deixou de ser usada.
+ *
+ * Recebe o que estava em `image` antes e o que ficou depois de uma gravação.
+ * Só age quando o valor anterior é chave do bucket e mudou: caminho antigo
+ * mora em `public/`, não no bucket, e foto que continua em uso não se apaga.
+ *
+ * Devolve a chave apagada, ou `null` quando não havia o que apagar.
+ */
+export async function descartarFotoSubstituida(
+	storage: ImageStorage,
+	anterior: string | null,
+	atual: string | null,
+): Promise<ImageKey | null> {
+	if (anterior === null || anterior === atual) return null;
+	if (!ehChaveDeImagem(anterior)) return null;
+
+	await storage.remover(anterior);
+	return anterior;
 }
 
 /**

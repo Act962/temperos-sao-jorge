@@ -2,6 +2,7 @@ import {
 	type CatalogoPublicado,
 	montarCatalogoPublicado,
 } from "@my-better-t-app/core";
+import { baseDasImagens } from "./images";
 import { getRepositorios } from "./repos";
 
 /**
@@ -14,5 +15,7 @@ import { getRepositorios } from "./repos";
  * reserva quando o banco não responde.
  */
 export function lerCatalogoPublicado(): Promise<CatalogoPublicado> {
-	return montarCatalogoPublicado(getRepositorios());
+	return montarCatalogoPublicado(getRepositorios(), {
+		baseDasImagens: baseDasImagens(),
+	});
 }

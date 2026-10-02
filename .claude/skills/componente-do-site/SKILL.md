@@ -55,10 +55,14 @@ Variantes se resolvem com um mapa de classes e `cn()`.
 
 ## Imagens
 
-Packshot entra pelo pipeline `scripts/optimize-product-images.mjs` (recorta a
-margem transparente, redimensiona, gera WebP). O caminho segue
-`/images/products/<familia>/<arquivo>.webp` — o domínio recusa foto na pasta
-de outra família.
+A foto de produto e de receita chega ao componente como endereço pronto, no
+catálogo publicado: pode ser um caminho de `public/` (`/images/products/...`)
+ou um endereço do bucket. O componente não monta endereço nem sabe a diferença
+— use `product.image` e `recipe.image` como vierem. Vazio significa sem foto.
+
+Quem envia foto é o painel (spec 0010). O script
+`scripts/optimize-product-images.mjs` continua existindo para o acervo antigo
+em `public/images/products/`.
 
 Para fallback de imagem quebrada, use o hook `use-image-fallback`. Ele confere
 `node.complete && node.naturalWidth === 0` num ref callback, porque `onError`

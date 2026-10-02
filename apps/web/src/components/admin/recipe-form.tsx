@@ -6,6 +6,8 @@ import { Textarea } from "@my-better-t-app/ui/components/textarea";
 import { Link } from "@tanstack/react-router";
 import { useId, useState } from "react";
 import { OrderedListField } from "@/components/admin/ordered-list-field";
+import type { ValorDaFoto } from "@/components/admin/photo";
+import { PhotoField } from "@/components/admin/photo-field";
 import { ProductPicker } from "@/components/admin/product-picker";
 
 export const NIVEIS = ["Fácil", "Média", "Difícil"] as const;
@@ -19,7 +21,8 @@ export interface ReceitaFormulario {
 	level: (typeof NIVEIS)[number];
 	servings: number;
 	category: (typeof CATEGORIAS)[number];
-	image: string;
+	/** A foto salva e, se houver, a que foi escolhida e ainda não subiu. */
+	foto: ValorDaFoto;
 	ingredients: string[];
 	steps: string[];
 	usedProductSlugs: string[];
@@ -33,7 +36,7 @@ export const RECEITA_VAZIA: ReceitaFormulario = {
 	level: "Fácil",
 	servings: 4,
 	category: "Almoço",
-	image: "",
+	foto: { atual: "", nova: null },
 	ingredients: [""],
 	steps: [""],
 	usedProductSlugs: [],
@@ -91,7 +94,6 @@ export function RecipeForm({
 		servings: useId(),
 		level: useId(),
 		category: useId(),
-		image: useId(),
 	};
 	const [dados, setDados] = useState(inicial);
 	// Enquanto ninguém mexer no slug, ele acompanha o nome: quem escreve uma
@@ -123,7 +125,6 @@ export function RecipeForm({
 					slug: dados.slug.trim(),
 					name: dados.name.trim(),
 					summary: dados.summary.trim(),
-					image: dados.image.trim(),
 					ingredients: limpo(dados.ingredients),
 					steps: limpo(dados.steps),
 				});
@@ -254,18 +255,14 @@ export function RecipeForm({
 					minutos.
 				</p>
 
-				<div className="flex flex-col gap-1.5">
-					<Label htmlFor={ids.image}>Foto</Label>
-					<Input
-						id={ids.image}
-						value={dados.image}
-						placeholder="/images/recipes/arroz-a-grega.webp"
-						onChange={(evento) => mudar("image", evento.target.value)}
-					/>
-					<p className="font-sans text-ink-faint text-xs">
-						Deixe vazio enquanto a foto não existir.
-					</p>
-				</div>
+				<PhotoField
+					rotulo="Foto do prato"
+					formato="foto"
+					valor={dados.foto}
+					aoMudar={(foto) => mudar("foto", foto)}
+					enviando={enviando}
+					ajuda="PNG, JPG ou WebP, até 20 MB. Fotos deitadas ficam melhor: é assim que a página da receita mostra."
+				/>
 
 				<OrderedListField
 					rotulo="Ingredientes"

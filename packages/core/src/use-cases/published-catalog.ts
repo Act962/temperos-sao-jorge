@@ -1,3 +1,4 @@
+import { urlDaImagem } from "../domain/image";
 import { formatarDuracao, type Recipe } from "../domain/recipe";
 import type { SiteContent } from "../domain/site-content";
 import type { CatalogRepositories } from "../ports/catalog-repository";
@@ -13,10 +14,16 @@ import { obterConteudoDoSite } from "./site-content";
  * Postgres ou do retrato publicado.
  *
  * Difere das entidades em três pontos, todos de exibição: a família carrega a
- * contagem de produtos, o produto carrega o nome da família, e a foto ausente
- * é texto vazio em vez de `null` — o componente de imagem trata os dois
- * iguais, e o vazio atravessa a serialização sem caso especial.
+ * contagem de produtos, o produto carrega o nome da família, e a foto é o
+ * endereço que o navegador pede — a chave do bucket já transformada, e texto
+ * vazio em vez de `null` quando não há foto. O componente de imagem trata os
+ * dois iguais, e o vazio atravessa a serialização sem caso especial.
  */
+
+export interface OpcoesDePublicacao {
+	/** Endereço público do bucket. Sem ele, foto guardada por chave sai vazia. */
+	baseDasImagens?: string | null;
+}
 
 export interface FamiliaPublicada {
 	readonly slug: string;
@@ -58,7 +65,10 @@ export interface CatalogoPublicado {
 
 export async function montarCatalogoPublicado(
 	repos: CatalogRepositories,
+	opcoes: OpcoesDePublicacao = {},
 ): Promise<CatalogoPublicado> {
+	const base = opcoes.baseDasImagens ?? null;
+
 	const [familias, produtos, receitas, content] = await Promise.all([
 		listarFamiliasComContagem(repos.products),
 		listarProdutos(repos.products),
@@ -79,7 +89,7 @@ export async function montarCatalogoPublicado(
 			name: produto.name,
 			familySlug: produto.familySlug,
 			family: nomeDaFamilia.get(produto.familySlug) ?? "",
-			image: produto.image ?? "",
+			image: urlDaImagem(produto.image, base),
 		})),
 		// Ordem por slug, comparando caractere a caractere. O `ORDER BY` do
 		// Postgres e o `localeCompare` dependem do idioma configurado — um põe
@@ -97,7 +107,7 @@ export async function montarCatalogoPublicado(
 				servings: receita.servings,
 				category: receita.category,
 				summary: receita.summary,
-				image: receita.image ?? "",
+				image: urlDaImagem(receita.image, base),
 				ingredients: receita.ingredients,
 				steps: receita.steps,
 				usedProductSlugs: receita.usedProductSlugs,

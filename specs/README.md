@@ -35,8 +35,9 @@ ao código.
 | [0002](0002-painel-de-produtos.md) | Painel de administração: produtos | implementada |
 | [0003](0003-edicao-de-receitas.md) | Painel de administração: receitas | implementada |
 | [0004](0004-imagens-no-r2.md) | Fotos em object storage (Cloudflare R2) | implementada |
-| [0005](0005-upload-de-imagens-no-painel.md) | Upload de imagens no painel | proposta |
+| [0005](0005-upload-de-imagens-no-painel.md) | Upload de imagens no painel | substituída pela 0010, sem ter sido implementada |
 | [0006](0006-painel-responsivo-e-familias.md) | Painel responsivo, busca e famílias | implementada |
 | [0007](0007-conteudo-em-tempo-real.md) | Edição no ar ao salvar, sem publicação | implementada |
 | [0008](0008-conteudo-do-site-no-painel.md) | Configurações e textos das páginas no painel | implementada |
 | [0009](0009-usuarios-do-painel.md) | Usuários do painel e cadastro público fechado | implementada |
+| [0010](0010-envio-de-fotos-pelo-painel.md) | Envio de fotos pelo painel | implementada |

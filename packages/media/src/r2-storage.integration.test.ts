@@ -7,7 +7,8 @@ import {
 	removerImagem,
 } from "@my-better-t-app/core";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { configuracaoDoAmbiente, R2ImageStorage } from "./r2-storage";
+import { configuracaoDoAmbiente } from "./config";
+import { R2ImageStorage } from "./r2-storage";
 import { SharpImageProcessor } from "./sharp-processor";
 
 /**
