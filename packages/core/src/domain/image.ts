@@ -34,14 +34,64 @@ export function comoChaveDeImagem(valor: string): ImageKey {
 	return valor;
 }
 
+/**
+ * Sufixo que distingue um envio do anterior: `sachet-melissa-m3k9x2`.
+ *
+ * As fotos são guardadas com cache de um ano, imutável. Sem a versão, trocar a
+ * foto de um produto manteria o endereço, e quem já visitou o site continuaria
+ * vendo a antiga. Com ela, foto nova é endereço novo (spec 0010).
+ */
+function comVersao(slug: string, versao: string | undefined): string {
+	if (versao === undefined) return comoSlug(slug);
+
+	if (!/^[a-z0-9]+$/.test(versao)) {
+		throw new InvalidInputError(
+			`Versão de imagem inválida: "${versao}". Use só minúsculas e números.`,
+		);
+	}
+	return `${comoSlug(slug)}-${versao}`;
+}
+
 /** `products/chas/sachet-melissa.webp` — a família fica no caminho. */
-export function chaveDePackshot(familySlug: string, slug: string): ImageKey {
-	return `products/${comoSlug(familySlug)}/${comoSlug(slug)}.webp` as ImageKey;
+export function chaveDePackshot(
+	familySlug: string,
+	slug: string,
+	versao?: string,
+): ImageKey {
+	return `products/${comoSlug(familySlug)}/${comVersao(slug, versao)}.webp` as ImageKey;
 }
 
 /** `recipes/arroz-a-grega.webp` — receita não tem família. */
-export function chaveDeReceita(slug: string): ImageKey {
-	return `recipes/${comoSlug(slug)}.webp` as ImageKey;
+export function chaveDeReceita(slug: string, versao?: string): ImageKey {
+	return `recipes/${comVersao(slug, versao)}.webp` as ImageKey;
+}
+
+/**
+ * O que o campo `image` de um produto ou de uma receita pode guardar.
+ *
+ * Dois mundos convivem (spec 0010): o caminho antigo, servido de `public/` —
+ * `/images/products/chas/sachet-melissa.webp` —, e a chave do bucket, sem
+ * barra no começo. É a barra que distingue um do outro.
+ */
+export function ehCaminhoAntigo(valor: string): boolean {
+	return valor.startsWith("/images/");
+}
+
+/**
+ * O endereço que o navegador pede, a partir do que está guardado em `image`.
+ *
+ * Caminho antigo sai como está. Chave vira endereço do CDN — e, sem a base
+ * configurada, vira vazio: o site mostra o espaço reservado, que é melhor que
+ * um endereço que não existe.
+ */
+export function urlDaImagem(
+	valor: string | null | undefined,
+	base: string | null | undefined,
+): string {
+	if (!valor) return "";
+	if (ehCaminhoAntigo(valor)) return valor;
+	if (!ehChaveDeImagem(valor) || !base) return "";
+	return `${base.replace(/\/+$/, "")}/${valor}`;
 }
 
 /**
@@ -76,11 +126,34 @@ export const PACKSHOT = {
 	qualidadeWebp: 82,
 } as const;
 
+/**
+ * Tratamento da foto de receita.
+ *
+ * Foto de prato é fotografia: não tem moldura transparente para recortar e
+ * aparece bem maior que um packshot — a página da receita a usa na largura do
+ * texto. 1600 px cobre essa largura em tela 2x.
+ */
+export const FOTO_DE_RECEITA = {
+	maiorAresta: 1600,
+	qualidadeWebp: 80,
+} as const;
+
 export const TIPOS_ACEITOS = [
 	"image/png",
 	"image/jpeg",
 	"image/webp",
 	"image/tiff",
+] as const;
+
+/**
+ * O que o painel oferece no seletor de arquivo. TIFF fica de fora: navegador
+ * não abre TIFF, e o painel precisa abrir a foto para reduzi-la antes de
+ * enviar.
+ */
+export const TIPOS_DO_PAINEL = [
+	"image/png",
+	"image/jpeg",
+	"image/webp",
 ] as const;
 
 /** Os originais da marca têm de 3 a 9 MB; o teto deixa folga sem virar porta. */

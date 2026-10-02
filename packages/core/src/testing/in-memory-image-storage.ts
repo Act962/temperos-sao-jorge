@@ -69,6 +69,12 @@ export class FakeImageProcessor implements ImageProcessor {
 		this.chamadas += 1;
 		return Uint8Array.from([0x77, 0x45, 0x42, 0x50, ...original]);
 	}
+
+	/** Marca diferente da do packshot, para o teste saber qual tratamento rodou. */
+	async paraFotoDeReceita(original: Uint8Array): Promise<Uint8Array> {
+		this.chamadas += 1;
+		return Uint8Array.from([0x46, 0x4f, 0x54, 0x4f, ...original]);
+	}
 }
 
 export function servicosDeImagemEmMemoria(): ImageServices & {

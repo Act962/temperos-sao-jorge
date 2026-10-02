@@ -1,4 +1,4 @@
-import { PACKSHOT } from "@my-better-t-app/core";
+import { FOTO_DE_RECEITA, PACKSHOT } from "@my-better-t-app/core";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { SharpImageProcessor } from "./sharp-processor";
@@ -93,5 +93,45 @@ describe("SharpImageProcessor", () => {
 		).metadata();
 
 		expect(meta.width).toBe(80 + PACKSHOT.margem * 2);
+	});
+});
+
+/** Uma fotografia: opaca, sem moldura, mais larga que alta. */
+async function fotografia(
+	largura: number,
+	altura: number,
+): Promise<Uint8Array> {
+	const foto = await sharp({
+		create: {
+			width: largura,
+			height: altura,
+			channels: 3,
+			background: { r: 190, g: 120, b: 60 },
+		},
+	})
+		.jpeg()
+		.toBuffer();
+	return new Uint8Array(foto);
+}
+
+describe("foto de receita", () => {
+	it("encolhe para a maior aresta do domínio, mantendo a proporção", async () => {
+		const saida = await processador.paraFotoDeReceita(
+			await fotografia(4000, 3000),
+		);
+		const meta = await sharp(saida).metadata();
+
+		expect(meta.format).toBe("webp");
+		expect(meta.width).toBe(FOTO_DE_RECEITA.maiorAresta);
+		expect(meta.height).toBe((FOTO_DE_RECEITA.maiorAresta * 3) / 4);
+	});
+
+	it("não recorta nem acrescenta margem, ao contrário do packshot", async () => {
+		const meta = await sharp(
+			await processador.paraFotoDeReceita(await fotografia(800, 600)),
+		).metadata();
+
+		expect(meta.width).toBe(800);
+		expect(meta.height).toBe(600);
 	});
 });

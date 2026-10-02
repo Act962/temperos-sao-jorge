@@ -1,4 +1,5 @@
 import { InvalidInputError } from "./errors";
+import { ehCaminhoAntigo, ehChaveDeImagem } from "./image";
 import { comoSlug, type Slug } from "./slug";
 
 export const NIVEIS = ["Fácil", "Média", "Difícil"] as const;
@@ -83,6 +84,17 @@ export function criarReceita(entrada: NovaReceita): Recipe {
 		);
 	}
 
+	const image = entrada.image ?? null;
+	if (
+		image !== null &&
+		!ehCaminhoAntigo(image) &&
+		!(ehChaveDeImagem(image) && image.startsWith("recipes/"))
+	) {
+		throw new InvalidInputError(
+			`Foto de "${name}" fora do padrão: "${image}". Esperado um caminho em /images/ ou a chave de uma foto enviada pelo painel.`,
+		);
+	}
+
 	if (entrada.steps.length === 0) {
 		throw new InvalidInputError(
 			`"${name}" precisa de ao menos um passo de preparo.`,
@@ -97,7 +109,7 @@ export function criarReceita(entrada: NovaReceita): Recipe {
 		level: entrada.level,
 		servings: entrada.servings,
 		category: entrada.category,
-		image: entrada.image ?? null,
+		image,
 		ingredients: [...entrada.ingredients],
 		steps: [...entrada.steps],
 		usedProductSlugs: (entrada.usedProductSlugs ?? []).map(comoSlug),

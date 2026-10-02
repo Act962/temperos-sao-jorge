@@ -1,5 +1,5 @@
 import type { ImageProcessor } from "@my-better-t-app/core";
-import { PACKSHOT } from "@my-better-t-app/core";
+import { FOTO_DE_RECEITA, PACKSHOT } from "@my-better-t-app/core";
 import sharp from "sharp";
 
 /**
@@ -39,6 +39,25 @@ export class SharpImageProcessor implements ImageProcessor {
 				alphaQuality: 100,
 				effort: 6,
 			})
+			.toBuffer();
+
+		return new Uint8Array(saida);
+	}
+
+	/**
+	 * Foto de prato: só encolhe e converte.
+	 *
+	 * `rotate()` sem argumento aplica a orientação gravada pela câmera antes de
+	 * descartá-la — sem isso, a foto tirada com o celular em pé sairia deitada.
+	 */
+	async paraFotoDeReceita(original: Uint8Array): Promise<Uint8Array> {
+		const saida = await sharp(original)
+			.rotate()
+			.resize(FOTO_DE_RECEITA.maiorAresta, FOTO_DE_RECEITA.maiorAresta, {
+				fit: "inside",
+				withoutEnlargement: true,
+			})
+			.webp({ quality: FOTO_DE_RECEITA.qualidadeWebp, effort: 5 })
 			.toBuffer();
 
 		return new Uint8Array(saida);

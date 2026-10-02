@@ -65,12 +65,23 @@ trocar, porque ele é a URL pública.
 
 ## Regra não se repete na tela
 
-O formulário **não** valida caminho de packshot, formato de slug ou existência
-de família. Quem decide é `packages/core`; `packages/api/src/errors.ts` traduz
+O formulário **não** valida nome, formato de slug ou existência de família. Quem decide é `packages/core`; `packages/api/src/errors.ts` traduz
 o erro; a tela mostra a mensagem que chegou. Validação duplicada no formulário
 vira uma segunda verdade que ninguém lembra de atualizar.
 
 Use `required` e `type` do HTML para forma de campo. Regra de negócio, não.
+
+## Foto
+
+Campo de foto é `<PhotoField>` (`components/admin/photo-field.tsx`), com o
+valor `{ atual, nova }` no estado do formulário. Ele só escolhe o arquivo: quem
+salva chama `resolverFoto` antes da mutação e passa
+`{ onError: () => descartarFoto(foto.enviada) }` nela — a foto sobe primeiro, e
+sai do bucket se a gravação falhar. Veja `admin.produtos.tsx`.
+
+O campo se desliga sozinho quando o bucket não está configurado. Miniatura em
+listagem usa `urlDaImagem(item.image, base)`, com a base de
+`trpc.imagens.estado`.
 
 ## Consultas e escrita
 

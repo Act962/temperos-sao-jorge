@@ -33,6 +33,12 @@ O catálogo lido fica em cache e é expirado em toda gravação do painel, na ro
 `/api/trpc`. Mutação nova não precisa fazer nada; escrita no banco por outro
 caminho precisa chamar `expireCatalog()`.
 
+O bucket das fotos (spec 0010) também é opcional: sem as variáveis `R2_*` o
+site e o painel funcionam, só sem enviar foto. `sharp` e o cliente S3 entram
+apenas por `import()` dinâmico, a partir de `packages/api/src/images.ts` — um
+import estático de `packages/media` em qualquer outro lugar faz o site público
+depender de binário nativo para subir.
+
 ## Antes de escrever código
 
 Mudança de comportamento começa por uma spec em `specs/`. Veja a skill

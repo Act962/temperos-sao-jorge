@@ -127,6 +127,21 @@ export const PUBLISHED_CONTENT: Record<string, unknown> = ${json(documentos)};
 `;
 }
 
+/**
+ * O endereço da foto, a partir do que está guardado em `image`.
+ *
+ * Mesma regra de `urlDaImagem` em `@my-better-t-app/core`, repetida aqui
+ * porque este script roda direto no Node, sem o empacotador que resolve os
+ * imports do domínio: caminho antigo sai como está, chave do bucket ganha o
+ * endereço público, e sem `R2_PUBLIC_URL` a chave vira vazio.
+ */
+function urlDaImagem(valor, base) {
+	if (!valor) return "";
+	if (valor.startsWith("/images/")) return valor;
+	if (!base) return "";
+	return `${base.replace(/\/+$/, "")}/${valor}`;
+}
+
 /** "1 h 20 min" a partir de 80. Derivado, nunca guardado. */
 function formatarDuracao(minutes) {
 	const horas = Math.floor(minutes / 60);
@@ -164,13 +179,14 @@ async function main() {
 		.orderBy(asc(recipeProduct.position));
 
 	const nomePorFamilia = new Map(familias.map((f) => [f.slug, f.name]));
+	const baseDasImagens = process.env.R2_PUBLIC_URL?.trim() || null;
 
 	const produtos = linhasProduto.map((linha) => ({
 		slug: linha.slug,
 		name: linha.name,
 		familySlug: linha.familySlug,
 		family: nomePorFamilia.get(linha.familySlug) ?? "",
-		image: linha.image ?? "",
+		image: urlDaImagem(linha.image, baseDasImagens),
 	}));
 
 	// Mesma ordem de `montarCatalogoPublicado`: por slug, caractere a caractere.
@@ -189,7 +205,7 @@ async function main() {
 		servings: linha.servings,
 		category: linha.category,
 		summary: linha.summary,
-		image: linha.image ?? "",
+		image: urlDaImagem(linha.image, baseDasImagens),
 		ingredients: linha.ingredients,
 		steps: linha.steps,
 		usedProductSlugs: vinculos

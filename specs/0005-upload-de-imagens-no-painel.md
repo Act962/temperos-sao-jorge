@@ -1,6 +1,7 @@
 # 0005 — Upload de imagens no painel
 
-- **Estado:** proposta
+- **Estado:** substituída pela [0010](0010-envio-de-fotos-pelo-painel.md), sem
+  ter sido implementada
 - **Data:** 2026-09-02
 
 ## Problema

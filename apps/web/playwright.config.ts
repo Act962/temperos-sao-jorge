@@ -28,6 +28,29 @@ const SESSAO = "e2e/.auth/painel.json";
  */
 const comBanco = process.env.DATABASE_URL;
 
+/**
+ * O bucket das fotos é opcional até para a suíte com banco: sem as variáveis,
+ * os testes de envio se pulam e o painel mostra o campo de foto desativado.
+ * Com elas — um MinIO local ou o do CI —, o envio é exercitado de ponta a
+ * ponta.
+ */
+const NOMES_DO_BUCKET = [
+	"R2_ENDPOINT",
+	"R2_BUCKET",
+	"R2_ACCESS_KEY_ID",
+	"R2_SECRET_ACCESS_KEY",
+	"R2_PUBLIC_URL",
+] as const;
+
+const BUCKET: Record<string, string> = Object.fromEntries(
+	NOMES_DO_BUCKET.map((nome) => [nome, process.env[nome] ?? ""]),
+);
+
+/** Vazio em vez de ausente, pelo mesmo motivo de `DATABASE_URL` logo abaixo. */
+const SEM_BUCKET: Record<string, string> = Object.fromEntries(
+	NOMES_DO_BUCKET.map((nome) => [nome, ""]),
+);
+
 function servidor(porta: number, env: Record<string, string>) {
 	return {
 		command: `node ../../node_modules/vite-plus/bin/vp preview --port ${porta}`,
@@ -90,11 +113,12 @@ export default defineConfig({
 		// `DATABASE_URL` vazio em vez de ausente: o `dotenv` da aplicação não
 		// sobrescreve variável já definida, então um `.env` local com banco não
 		// consegue enfraquecer a suíte que existe para provar a ausência dele.
-		servidor(PORTA, { CI: "true", DATABASE_URL: "" }),
+		servidor(PORTA, { CI: "true", DATABASE_URL: "", ...SEM_BUCKET }),
 		...(comBanco
 			? [
 					servidor(PORTA_COM_BANCO, {
 						CI: "true",
+						...BUCKET,
 						DATABASE_URL: comBanco,
 						BETTER_AUTH_URL: BASE_URL_COM_BANCO,
 						BETTER_AUTH_SECRET:

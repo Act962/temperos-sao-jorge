@@ -42,6 +42,9 @@ export interface ImageStorage {
 export interface ImageProcessor {
 	/** Recorta, redimensiona e converte para WebP conforme `PACKSHOT`. */
 	paraPackshot(original: Uint8Array): Promise<Uint8Array>;
+
+	/** Redimensiona e converte para WebP conforme `FOTO_DE_RECEITA`. */
+	paraFotoDeReceita(original: Uint8Array): Promise<Uint8Array>;
 }
 
 export interface ImageServices {

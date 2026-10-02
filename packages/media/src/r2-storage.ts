@@ -12,18 +12,7 @@ import type {
 	ImageStorage,
 } from "@my-better-t-app/core";
 import { comoChaveDeImagem } from "@my-better-t-app/core";
-
-export interface ConfiguracaoDeArmazenamento {
-	endpoint: string;
-	bucket: string;
-	accessKeyId: string;
-	secretAccessKey: string;
-	/** Base pública das imagens, sem barra no fim. */
-	urlPublica: string;
-	/** R2 não usa região; "auto" é o valor que ele espera. */
-	region?: string;
-	forcePathStyle?: boolean;
-}
+import type { ConfiguracaoDeArmazenamento } from "./config";
 
 /**
  * Armazenamento de imagens em bucket compatível com S3.
@@ -65,9 +54,9 @@ export class R2ImageStorage implements ImageStorage {
 				Key: key,
 				Body: corpo,
 				ContentType: contentType,
-				// Um ano, imutável: a chave carrega o slug, e trocar a foto de um
-				// produto sem trocar o nome dele é o caso raro. Quando acontecer, o
-				// jeito é invalidar no CDN, não encurtar o cache de todo mundo.
+				// Um ano, imutável: quem envia foto nova gera chave nova, com a
+				// versão no nome (spec 0010). O conteúdo de uma chave nunca muda,
+				// então não há o que revalidar.
 				CacheControl: "public, max-age=31536000, immutable",
 			}),
 		);
@@ -165,32 +154,4 @@ function ehNaoEncontrado(erro: unknown): boolean {
 		candidato.name === "NoSuchKey" ||
 		candidato.$metadata?.httpStatusCode === 404
 	);
-}
-
-/**
- * Monta a configuração a partir do ambiente.
- *
- * Fica aqui, e não em `packages/env`, porque as variáveis são opcionais
- * enquanto o site continua servindo `public/images/`: exigi-las no schema
- * compartilhado quebraria todo mundo que ainda não tem bucket.
- */
-export function configuracaoDoAmbiente(
-	ambiente: NodeJS.ProcessEnv = process.env,
-): ConfiguracaoDeArmazenamento | null {
-	const conta = ambiente.R2_ACCOUNT_ID;
-	const bucket = ambiente.R2_BUCKET;
-	const accessKeyId = ambiente.R2_ACCESS_KEY_ID;
-	const secretAccessKey = ambiente.R2_SECRET_ACCESS_KEY;
-	const urlPublica = ambiente.R2_PUBLIC_URL;
-
-	if (!bucket || !accessKeyId || !secretAccessKey || !urlPublica) return null;
-
-	// O endpoint explícito existe para apontar o adaptador a um MinIO local; em
-	// produção ele é derivado da conta.
-	const endpoint =
-		ambiente.R2_ENDPOINT ??
-		(conta ? `https://${conta}.r2.cloudflarestorage.com` : undefined);
-	if (!endpoint) return null;
-
-	return { endpoint, bucket, accessKeyId, secretAccessKey, urlPublica };
 }

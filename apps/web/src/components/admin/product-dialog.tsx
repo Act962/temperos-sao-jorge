@@ -10,13 +10,16 @@ import {
 import { Input } from "@my-better-t-app/ui/components/input";
 import { Label } from "@my-better-t-app/ui/components/label";
 import { useId, useState } from "react";
+import type { ValorDaFoto } from "@/components/admin/photo";
+import { PhotoField } from "@/components/admin/photo-field";
 
 export interface ProdutoFormulario {
 	/** Ausente ao criar: o domínio deriva do nome. */
 	slug?: string;
 	name: string;
 	familySlug: string;
-	image: string;
+	/** A foto salva e, se houver, a que foi escolhida e ainda não subiu. */
+	foto: ValorDaFoto;
 }
 
 interface ProductDialogProps {
@@ -35,9 +38,12 @@ interface ProductDialogProps {
 /**
  * Formulário de produto.
  *
- * Não valida packshot nem slug aqui: quem decide é o domínio, e o erro dele
+ * Não valida nome nem slug aqui: quem decide é o domínio, e o erro dele
  * aparece no lugar da mensagem. Duplicar a regra na tela criaria uma segunda
  * verdade para manter em sincronia.
+ *
+ * A foto só é escolhida aqui. Quem a envia é quem salva, junto com o resto —
+ * veja `resolverFoto`.
  *
  * O slug não é perguntado: quem cadastra um produto pensa no nome, e o
  * identificador sai dele em `criarNovoProduto`.
@@ -55,12 +61,13 @@ export function ProductDialog({
 	const ids = {
 		name: useId(),
 		familia: useId(),
-		image: useId(),
-		ajudaImagem: useId(),
 	};
 	const editando = inicial !== undefined;
 	const [familia, setFamilia] = useState(
 		inicial?.familySlug ?? familiaSugerida ?? familias[0]?.slug ?? "",
+	);
+	const [foto, setFoto] = useState<ValorDaFoto>(
+		inicial?.foto ?? { atual: "", nova: null },
 	);
 
 	return (
@@ -74,7 +81,7 @@ export function ProductDialog({
 							slug: inicial?.slug,
 							name: String(dados.get("name") ?? "").trim(),
 							familySlug: familia,
-							image: String(dados.get("image") ?? "").trim(),
+							foto,
 						});
 					}}
 				>
@@ -118,24 +125,14 @@ export function ProductDialog({
 							</select>
 						</div>
 
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor={ids.image}>Foto do produto</Label>
-							<Input
-								id={ids.image}
-								name="image"
-								defaultValue={inicial?.image}
-								aria-describedby={ids.ajudaImagem}
-								autoComplete="off"
-								placeholder="/images/products/temperos-em-po/sachet-paprica-doce.webp"
-							/>
-							<p
-								id={ids.ajudaImagem}
-								className="font-sans text-ink-faint text-xs"
-							>
-								Caminho do arquivo da foto. Deixe vazio enquanto ela não existir
-								— o envio de fotos pelo painel chega numa próxima etapa.
-							</p>
-						</div>
+						<PhotoField
+							rotulo="Foto do produto"
+							formato="packshot"
+							valor={foto}
+							aoMudar={setFoto}
+							enviando={enviando}
+							ajuda="PNG, JPG ou WebP, até 20 MB. O fundo vazio em volta do produto é recortado sozinho."
+						/>
 
 						{erro ? (
 							<p role="alert" className="font-sans text-brand text-sm">
