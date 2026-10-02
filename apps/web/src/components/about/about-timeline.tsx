@@ -1,6 +1,6 @@
+import type { TimelineEntry } from "@my-better-t-app/core";
 import { cn } from "@my-better-t-app/ui/lib/utils";
 import { Reveal } from "@/components/ui/reveal";
-import { TIMELINE } from "@/data/timeline";
 
 /**
  * Linha do tempo da empresa.
@@ -11,8 +11,12 @@ import { TIMELINE } from "@/data/timeline";
  * antes espremia cinco textos em telas estreitas e dava à melhor história da
  * marca o menor peso da página.
  */
-export function AboutTimeline() {
-	const lastIndex = TIMELINE.length - 1;
+export function AboutTimeline({
+	entries,
+}: {
+	entries: readonly TimelineEntry[];
+}) {
+	const lastIndex = entries.length - 1;
 
 	return (
 		<ol className="relative">
@@ -22,14 +26,14 @@ export function AboutTimeline() {
 				className="absolute top-3 bottom-3 left-[7px] w-px bg-brand/20 lg:left-1/2 lg:-translate-x-1/2"
 			/>
 
-			{TIMELINE.map((entry, index) => {
+			{entries.map((entry, index) => {
 				const onLeft = index % 2 === 0;
 				const isCurrent = index === lastIndex;
 
 				return (
 					<Reveal
 						as="li"
-						key={entry.year}
+						key={`${entry.year}-${entry.title}`}
 						delay={index * 90}
 						className={cn(
 							"relative pb-11 pl-9 last:pb-0",

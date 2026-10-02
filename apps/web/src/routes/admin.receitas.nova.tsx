@@ -65,7 +65,7 @@ function NovaReceita() {
 		<>
 			<PageHeading
 				title="Nova receita"
-				description="Depois de salvar ela continua aberta para ajustes, e entra no site na próxima publicação."
+				description="Ao salvar, ela já aparece no site e continua aberta aqui para ajustes."
 			/>
 			<RecipeForm
 				inicial={RECEITA_VAZIA}

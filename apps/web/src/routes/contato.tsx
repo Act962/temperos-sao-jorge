@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ContactForm } from "@/components/contact/contact-form";
 import { ContactInfo } from "@/components/contact/contact-info";
 import { PageHeader } from "@/components/ui/page-header";
+import { catalogQuery } from "@/lib/catalog";
 import { buildPageSeo } from "@/lib/seo";
 import {
 	breadcrumbSchema,
@@ -13,13 +14,17 @@ const DESCRIPTION =
 	"Fale com a São Jorge Alimentos: atendimento ao consumidor, oportunidades de distribuição, trabalhe conosco e imprensa.";
 
 export const Route = createFileRoute("/contato")({
-	head: () => {
+	loader: ({ context }) => context.queryClient.ensureQueryData(catalogQuery),
+
+	head: ({ loaderData }) => {
 		const seo = buildPageSeo({
 			title: "Contato",
 			description: DESCRIPTION,
 			path: "/contato",
 		});
-		const localBusiness = localBusinessSchema();
+		const localBusiness = loaderData
+			? localBusinessSchema(loaderData.content.settings)
+			: undefined;
 		return {
 			meta: seo.meta,
 			links: seo.links,

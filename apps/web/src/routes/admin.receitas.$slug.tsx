@@ -77,7 +77,7 @@ function EditarReceita() {
 		<>
 			<PageHeading
 				title={atual.name}
-				description="As mudanças entram no site na próxima publicação."
+				description="O que você salvar já vale no site."
 			/>
 			<RecipeForm
 				// A receita carregada é o estado inicial do formulário. A chave força

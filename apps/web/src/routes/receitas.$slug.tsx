@@ -2,8 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { PhotoFrame } from "@/components/ui/photo-frame";
 import { ProductImage } from "@/components/ui/product-image";
-import { PRODUCTS } from "@/data/products";
-import { getRecipeBySlug } from "@/data/recipes";
+import { catalogQuery, getRecipeBySlug } from "@/lib/catalog";
 import { buildPageSeo } from "@/lib/seo";
 import {
 	breadcrumbSchema,
@@ -12,11 +11,12 @@ import {
 } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/receitas/$slug")({
-	loader: ({ params }) => {
-		const recipe = getRecipeBySlug(params.slug);
+	loader: async ({ context, params }) => {
+		const catalog = await context.queryClient.ensureQueryData(catalogQuery);
+		const recipe = getRecipeBySlug(catalog, params.slug);
 		if (!recipe) throw notFound();
 		const usedProducts = recipe.usedProductSlugs.flatMap((slug) => {
-			const product = PRODUCTS.find((item) => item.slug === slug);
+			const product = catalog.products.find((item) => item.slug === slug);
 			return product ? [product] : [];
 		});
 		return { recipe, usedProducts };

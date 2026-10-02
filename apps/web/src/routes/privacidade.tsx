@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalDocument } from "@/components/legal/legal-document";
-import { PRIVACY_POLICY } from "@/data/legal";
+import { catalogQuery } from "@/lib/catalog";
 import { buildPageSeo } from "@/lib/seo";
 import { breadcrumbSchema, jsonLdScript } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/privacidade")({
-	head: () => {
+	loader: async ({ context }) => {
+		const catalog = await context.queryClient.ensureQueryData(catalogQuery);
+		return catalog.content.privacy;
+	},
+
+	head: ({ loaderData }) => {
+		if (!loaderData) return {};
 		const seo = buildPageSeo({
-			title: PRIVACY_POLICY.title,
-			description: PRIVACY_POLICY.summary,
+			title: loaderData.title,
+			description: loaderData.summary,
 			path: "/privacidade",
 		});
 		return {
@@ -18,7 +24,7 @@ export const Route = createFileRoute("/privacidade")({
 				jsonLdScript(
 					breadcrumbSchema([
 						{ name: "Início", path: "/" },
-						{ name: PRIVACY_POLICY.title, path: "/privacidade" },
+						{ name: loaderData.title, path: "/privacidade" },
 					]),
 				),
 			],
@@ -30,7 +36,7 @@ export const Route = createFileRoute("/privacidade")({
 function PrivacyPage() {
 	return (
 		<div className="bg-cream pt-16 pb-24">
-			<LegalDocument document={PRIVACY_POLICY} />
+			<LegalDocument document={Route.useLoaderData()} />
 		</div>
 	);
 }

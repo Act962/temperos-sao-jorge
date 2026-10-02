@@ -16,6 +16,7 @@
 	"dependencies": {
 		"@my-better-t-app/api": "workspace:*",
 		"@my-better-t-app/auth": "workspace:*",
+		"@my-better-t-app/core": "workspace:*",
 		"@my-better-t-app/env": "workspace:*",
 		"@my-better-t-app/ui": "workspace:*",
 		"@tailwindcss/vite": "^4.3.3",
@@ -27,6 +28,7 @@
 		"@trpc/client": "catalog:",
 		"@trpc/server": "catalog:",
 		"@trpc/tanstack-react-query": "^11.18.0",
+		"@vercel/functions": "^3.9.9",
 		"better-auth": "catalog:",
 		"dotenv": "catalog:",
 		"embla-carousel-react": "^8.6.0",
@@ -36,8 +38,7 @@
 		"react-dom": "catalog:",
 		"sonner": "catalog:",
 		"tailwindcss": "catalog:",
-		"zod": "catalog:",
-		"@my-better-t-app/core": "workspace:*"
+		"zod": "catalog:"
 	},
 	"devDependencies": {
 		"@my-better-t-app/config": "workspace:*",

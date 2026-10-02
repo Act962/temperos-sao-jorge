@@ -13,8 +13,36 @@ Nome do componente e do arquivo em **inglês**, um componente por arquivo,
 `ui/`.
 
 Textos longos, listas e configuração não ficam no componente: vão para
-`apps/web/src/data/`. `products.ts` e `recipes.ts` são **gerados** pela
-publicação — trazem aviso no topo e não se editam à mão.
+`apps/web/src/data/`.
+
+## Catálogo
+
+Produtos, famílias e receitas vêm do banco a cada visita. No componente,
+`useCatalog()` de `lib/catalog.ts`; na rota, `catalogQuery` no `loader`, e o
+`head` usa o `loaderData`.
+
+`data/products.ts` e `data/recipes.ts` são a **reserva** que o servidor usa
+sem banco. São gerados, trazem aviso no topo e não se editam à mão. De lá o
+componente só importa **tipo** (`import type`): um import de valor levaria o
+retrato inteiro para o navegador e mostraria dado velho.
+
+## Textos e dados da empresa
+
+Telefone, endereço, WhatsApp, redes sociais e os textos da home, da página
+Sobre e das políticas são editados no painel. No componente:
+`useSiteContent()` de `lib/site-content.ts`. Em função pura (`structured-data`),
+as configurações entram por parâmetro.
+
+Texto novo que a marca deva poder trocar não vai no JSX: entra no tipo do
+documento em `packages/core/src/domain/site-content.ts`, no normalizador, no
+padrão (`site-content-defaults.ts`) e no formulário da tela correspondente.
+Rótulo de botão, título fixo de seção e texto alternativo estrutural continuam
+no componente.
+
+`data/site.ts` guarda só o que não se edita: nome, slogan, URL, logo.
+
+Função pura sobre o catálogo recebe o catálogo por parâmetro — veja
+`featuredFamilies` em `data/home.ts` e `getSiteRoutes` em `lib/site-routes.ts`.
 
 ## Estilo
 
@@ -50,7 +78,8 @@ na raiz, BreadcrumbList e ItemList nas listagens, Recipe nas receitas.
 
 ## Antes de dar por pronto
 
-O site público **não lê banco**. Nenhuma rota em `apps/web/src/routes/` que
-não seja `/admin` ou `/api` pode importar `packages/db` ou `packages/auth`,
-nem estática nem indiretamente. O e2e roda sem `DATABASE_URL` justamente para
+O site público **sobe sem banco**. Nenhuma rota em `apps/web/src/routes/` que
+não seja `/admin` ou `/api` pode importar `packages/db`, `packages/auth` ou
+`packages/api` de forma estática, nem indiretamente — o banco só entra por
+`import()` dinâmico, dentro de `server/catalog.server.ts`. O e2e roda sem `DATABASE_URL` justamente para
 quebrar inteiro quando isso acontece.

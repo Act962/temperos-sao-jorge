@@ -11,9 +11,16 @@ import { expect, test } from "@playwright/test";
 const ROTAS_PROTEGIDAS = [
 	"/admin",
 	"/admin/produtos",
+	"/admin/familias",
 	"/admin/receitas",
 	"/admin/receitas/nova",
 	"/admin/receitas/arroz-a-grega",
+	"/admin/inicio",
+	"/admin/sobre",
+	"/admin/privacidade",
+	"/admin/cookies",
+	"/admin/configuracoes",
+	"/admin/usuarios",
 ];
 
 test.describe("acesso ao painel", () => {

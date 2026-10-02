@@ -1,4 +1,4 @@
-import type { LegalDocument as LegalDocumentData } from "@/data/legal";
+import type { LegalDocument as LegalDocumentData } from "@my-better-t-app/core";
 
 interface LegalDocumentProps {
 	document: LegalDocumentData;
@@ -20,14 +20,14 @@ export function LegalDocument({ document }: LegalDocumentProps) {
 
 			<div className="mt-9 flex flex-col gap-7.5">
 				{document.sections.map((section, index) => (
-					<section key={section.heading ?? `intro-${index}`}>
+					<section key={section.heading || `intro-${index}`}>
 						{section.heading ? (
 							<h2 className="mb-3 font-bold font-sans text-[0.9375rem] text-brand uppercase tracking-[0.11em]">
 								{section.heading}
 							</h2>
 						) : null}
 
-						{section.paragraphs?.map((paragraph) => (
+						{section.paragraphs.map((paragraph) => (
 							<p
 								key={paragraph.slice(0, 48)}
 								className="text-pretty font-sans text-base text-ink-soft leading-[1.7]"
@@ -36,7 +36,7 @@ export function LegalDocument({ document }: LegalDocumentProps) {
 							</p>
 						))}
 
-						{section.cards ? (
+						{section.cards.length > 0 ? (
 							<ul className="flex flex-col gap-3">
 								{section.cards.map((card) => (
 									<li

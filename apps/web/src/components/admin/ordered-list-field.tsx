@@ -1,5 +1,5 @@
 import { Button } from "@my-better-t-app/ui/components/button";
-import { Input } from "@my-better-t-app/ui/components/input";
+import { Textarea } from "@my-better-t-app/ui/components/textarea";
 import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import { useId } from "react";
 
@@ -54,22 +54,36 @@ export function OrderedListField({
 				{itens.map((item, indice) => (
 					// A posição é a identidade aqui: dois ingredientes podem ter o
 					// mesmo texto, e o campo em branco recém-criado não tem nenhum.
-					<li key={indice} className="flex items-center gap-1.5">
-						<span className="w-5 shrink-0 text-right font-sans text-ink-faint text-xs tabular-nums">
+					//
+					// No celular o texto fica com a linha inteira e os botões descem:
+					// lado a lado, três botões de toque deixavam o campo com meia
+					// dúzia de letras visíveis.
+					<li
+						key={indice}
+						className="flex flex-wrap items-start gap-x-1.5 gap-y-0.5 sm:flex-nowrap"
+					>
+						<span className="w-5 shrink-0 pt-3 text-right font-sans text-ink-faint text-xs tabular-nums">
 							{indice + 1}
 						</span>
-						<Input
+						{/* Área de texto para a frase longa quebrar e ser lida inteira,
+						    mas sem quebra de linha dentro: cada item é uma linha só. */}
+						<Textarea
 							value={item}
+							rows={1}
 							aria-label={`${rotulo}, item ${indice + 1}`}
 							aria-describedby={ajuda ? idAjuda : undefined}
 							placeholder={placeholder}
+							className="min-h-0 min-w-0 flex-1 basis-[calc(100%-2rem)] sm:basis-0"
+							onKeyDown={(evento) => {
+								if (evento.key === "Enter") evento.preventDefault();
+							}}
 							onChange={(evento) => {
 								const copia = [...itens];
-								copia[indice] = evento.target.value;
+								copia[indice] = evento.target.value.replace(/\s*\n\s*/g, " ");
 								aoMudar(copia);
 							}}
 						/>
-						<div className="flex shrink-0">
+						<div className="ml-auto flex shrink-0">
 							<Button
 								type="button"
 								variant="ghost"

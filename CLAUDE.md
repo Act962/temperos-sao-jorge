@@ -8,14 +8,30 @@ conteúdo e como rodar. Aqui ficam só os pontos que se perdem com facilidade.
 
 ## O invariante que não se quebra
 
-**O site público sobe sem Postgres.** Nenhuma rota que não seja `/admin` ou
-`/api` pode importar `packages/db` ou `packages/auth`, nem de forma indireta.
-O e2e roda sem `DATABASE_URL` justamente para quebrar inteiro quando isso
-acontecer.
+**O site público sobe e responde sem Postgres.** Nenhuma rota que não seja
+`/admin` ou `/api` pode importar `packages/db`, `packages/auth` ou
+`packages/api` de forma **estática**, nem indiretamente. O e2e roda sem
+`DATABASE_URL` justamente para quebrar inteiro quando isso acontecer.
 
-O conteúdo vai do banco para o site por um comando de publicação, não em
-runtime. `apps/web/src/data/{products,recipes}.ts` são gerados: têm aviso no
-topo e não se editam à mão.
+Salvar no painel é publicar (spec 0007): o site lê o catálogo do banco a cada
+visita. As rotas públicas pedem o catálogo por `apps/web/src/lib/catalog.ts`
+— `catalogQuery` no `loader`, `useCatalog()` no componente — e nunca importam
+os dados de `apps/web/src/data/{products,recipes}.ts`. Só o tipo (`import
+type`) pode vir de lá.
+
+Esses dois arquivos são a **reserva**: o que o site serve sem `DATABASE_URL`
+ou com o banco fora do ar. São gerados por `pnpm run catalog:publish`, têm
+aviso no topo e não se editam à mão.
+
+Contato, WhatsApp, redes sociais e os textos das páginas também vêm do banco
+(spec 0008): são documentos de conteúdo, com o padrão em
+`packages/core/src/domain/site-content-defaults.ts`, e o componente os lê com
+`useSiteContent()`. Texto novo que a marca deva poder trocar entra num
+documento, não no JSX.
+
+O catálogo lido fica em cache e é expirado em toda gravação do painel, na rota
+`/api/trpc`. Mutação nova não precisa fazer nada; escrita no banco por outro
+caminho precisa chamar `expireCatalog()`.
 
 ## Antes de escrever código
 

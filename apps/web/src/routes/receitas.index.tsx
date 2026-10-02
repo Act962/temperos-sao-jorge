@@ -3,12 +3,12 @@ import { useState } from "react";
 import { RecipeGrid } from "@/components/recipes/recipe-grid";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { PageHeader } from "@/components/ui/page-header";
+import { catalogQuery, useCatalog } from "@/lib/catalog";
 import {
 	filterRecipes,
 	RECIPE_FILTERS,
-	RECIPES,
 	type RecipeFilter,
-} from "@/data/recipes";
+} from "@/lib/recipe-filters";
 import { buildPageSeo } from "@/lib/seo";
 import {
 	breadcrumbSchema,
@@ -25,7 +25,9 @@ const FILTER_OPTIONS = RECIPE_FILTERS.map((filter) => ({
 }));
 
 export const Route = createFileRoute("/receitas/")({
-	head: () => {
+	loader: ({ context }) => context.queryClient.ensureQueryData(catalogQuery),
+
+	head: ({ loaderData }) => {
 		const seo = buildPageSeo({
 			title: "Receitas",
 			description: DESCRIPTION,
@@ -41,7 +43,7 @@ export const Route = createFileRoute("/receitas/")({
 						{ name: "Receitas", path: "/receitas" },
 					]),
 				),
-				jsonLdScript(recipeListSchema(RECIPES, "/receitas")),
+				jsonLdScript(recipeListSchema(loaderData?.recipes ?? [], "/receitas")),
 			],
 		};
 	},
@@ -50,7 +52,7 @@ export const Route = createFileRoute("/receitas/")({
 
 function RecipesPage() {
 	const [filter, setFilter] = useState<RecipeFilter>("Todas");
-	const recipes = filterRecipes(RECIPES, filter);
+	const recipes = filterRecipes(useCatalog().recipes, filter);
 
 	return (
 		<div className="bg-cream pt-16 pb-24">

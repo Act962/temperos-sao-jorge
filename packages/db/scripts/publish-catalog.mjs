@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /**
- * Publica o catálogo: lê o Postgres e regrava os módulos de dados do site.
+ * Atualiza a reserva do catálogo: lê o Postgres e regrava os módulos de dados
+ * do site.
  *
- * É o que torna a arquitetura escolhida possível — banco como fonte da verdade
- * para o admin, site público sem dependência de banco em execução. Depois de
- * rodar, `pnpm --filter web build` gera o site já com o conteúdo novo.
+ * Desde a spec 0007 o site lê o banco a cada visita, e estes arquivos são o
+ * que ele serve quando não há `DATABASE_URL` ou o banco não responde. A edição
+ * não depende mais deste comando para ir ao ar; ele só impede a reserva de
+ * ficar muito atrás do banco. Vale rodar antes de um deploy.
  *
  * Uso:
  *   pnpm run catalog:publish [-- --dry-run]
@@ -23,6 +25,7 @@ import {
 	recipe,
 	recipeProduct,
 } from "../src/schema/catalog.ts";
+import { siteContent } from "../src/schema/content.ts";
 
 const ROOT = path.resolve(
 	path.dirname(fileURLToPath(import.meta.url)),
@@ -33,6 +36,9 @@ const DATA = path.join(ROOT, "apps/web/src/data");
 const AVISO = `// Gerado por packages/db/scripts/publish-catalog.mjs — não edite à mão.
 // A fonte da verdade é o Postgres; rode \`pnpm run catalog:publish\` para
 // regravar este arquivo a partir do banco.
+//
+// É a reserva que o site serve sem banco. As rotas e os componentes leem o
+// catálogo por \`@/lib/catalog\` e daqui só importam tipo.
 `;
 
 const json = (valor) => JSON.stringify(valor, null, "\t").replace(/\n/g, "\n");
@@ -79,18 +85,6 @@ export const RECIPE_CATEGORIES = ["Almoço", "Jantar", "Lanches", "Festas"] as c
 
 export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number];
 
-export const RECIPE_FILTERS = [
-	"Todas",
-	"Almoço",
-	"Jantar",
-	"Lanches",
-	"Festas",
-	"Até 30 min",
-	"+ 30 min",
-] as const;
-
-export type RecipeFilter = (typeof RECIPE_FILTERS)[number];
-
 export interface Recipe {
 	readonly slug: string;
 	readonly name: string;
@@ -112,15 +106,24 @@ export function getRecipeBySlug(slug: string): Recipe | undefined {
 	return RECIPES.find((recipe) => recipe.slug === slug);
 }
 
-export function filterRecipes(
-	recipes: readonly Recipe[],
-	filter: RecipeFilter,
-): readonly Recipe[] {
-	if (filter === "Todas") return recipes;
-	if (filter === "Até 30 min") return recipes.filter((recipe) => recipe.minutes <= 30);
-	if (filter === "+ 30 min") return recipes.filter((recipe) => recipe.minutes > 30);
-	return recipes.filter((recipe) => recipe.category === filter);
+`;
 }
+
+/**
+ * Os documentos de conteúdo, como estão no banco.
+ *
+ * Vão crus: quem confere a forma é `resolverConteudo`, na hora em que o site
+ * monta a reserva — a mesma função que confere o que vem do banco.
+ */
+function moduloConteudo(documentos) {
+	return `// Gerado por packages/db/scripts/publish-catalog.mjs — não edite à mão.
+// A fonte da verdade é o Postgres; rode \`pnpm run catalog:publish\` para
+// regravar este arquivo a partir do banco.
+//
+// É a reserva que o site serve sem banco: os documentos de conteúdo salvos
+// pelo painel. Chave ausente vale o padrão de \`@my-better-t-app/core\`.
+
+export const PUBLISHED_CONTENT: Record<string, unknown> = ${json(documentos)};
 `;
 }
 
@@ -170,6 +173,13 @@ async function main() {
 		image: linha.image ?? "",
 	}));
 
+	// Mesma ordem de `montarCatalogoPublicado`: por slug, caractere a caractere.
+	// O `ORDER BY` acima segue o idioma do banco, que varia de máquina para
+	// máquina, e a reserva tem que sair igual ao que o site lê ao vivo.
+	linhasReceita.sort((a, b) =>
+		a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0,
+	);
+
 	const receitas = linhasReceita.map((linha) => ({
 		slug: linha.slug,
 		name: linha.name,
@@ -187,8 +197,16 @@ async function main() {
 			.map((v) => v.productSlug),
 	}));
 
+	const linhasConteudo = await db
+		.select()
+		.from(siteContent)
+		.orderBy(asc(siteContent.key));
+	const documentos = Object.fromEntries(
+		linhasConteudo.map((linha) => [linha.key, linha.data]),
+	);
+
 	console.log(
-		`banco: ${familias.length} famílias, ${produtos.length} produtos, ${receitas.length} receitas`,
+		`banco: ${familias.length} famílias, ${produtos.length} produtos, ${receitas.length} receitas, ${linhasConteudo.length} documentos de conteúdo`,
 	);
 
 	if (dryRun) {
@@ -207,16 +225,23 @@ async function main() {
 		"utf8",
 	);
 
+	await writeFile(
+		path.join(DATA, "content.ts"),
+		moduloConteudo(documentos),
+		"utf8",
+	);
+
 	// O gerador emite JSON puro (chaves entre aspas, sem vírgula final). Sem
 	// passar o Biome aqui, publicar duas vezes seguidas produziria um diff
 	// enorme de puro estilo e esconderia a mudança de conteúdo de verdade.
 	await formatar([
 		path.join(DATA, "products.ts"),
 		path.join(DATA, "recipes.ts"),
+		path.join(DATA, "content.ts"),
 	]);
 
-	console.log("apps/web/src/data/{products,recipes}.ts regravados");
-	console.log("rode `pnpm --filter web build` para publicar o site");
+	console.log("apps/web/src/data/{products,recipes,content}.ts regravados");
+	console.log("a reserva entra no ar no próximo build do site");
 	process.exit(0);
 }
 

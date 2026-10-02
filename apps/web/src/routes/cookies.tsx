@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalDocument } from "@/components/legal/legal-document";
-import { COOKIE_POLICY } from "@/data/legal";
+import { catalogQuery } from "@/lib/catalog";
 import { buildPageSeo } from "@/lib/seo";
 import { breadcrumbSchema, jsonLdScript } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/cookies")({
-	head: () => {
+	loader: async ({ context }) => {
+		const catalog = await context.queryClient.ensureQueryData(catalogQuery);
+		return catalog.content.cookies;
+	},
+
+	head: ({ loaderData }) => {
+		if (!loaderData) return {};
 		const seo = buildPageSeo({
-			title: COOKIE_POLICY.title,
-			description: COOKIE_POLICY.summary,
+			title: loaderData.title,
+			description: loaderData.summary,
 			path: "/cookies",
 		});
 		return {
@@ -18,7 +24,7 @@ export const Route = createFileRoute("/cookies")({
 				jsonLdScript(
 					breadcrumbSchema([
 						{ name: "Início", path: "/" },
-						{ name: COOKIE_POLICY.title, path: "/cookies" },
+						{ name: loaderData.title, path: "/cookies" },
 					]),
 				),
 			],
@@ -30,7 +36,7 @@ export const Route = createFileRoute("/cookies")({
 function CookiesPage() {
 	return (
 		<div className="bg-cream pt-16 pb-24">
-			<LegalDocument document={COOKIE_POLICY} />
+			<LegalDocument document={Route.useLoaderData()} />
 		</div>
 	);
 }

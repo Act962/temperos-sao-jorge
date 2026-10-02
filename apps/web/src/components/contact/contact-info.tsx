@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CONTACT } from "@/data/site";
+import { phoneE164, useSiteContent } from "@/lib/site-content";
 
 interface InfoBlockProps {
 	title: string;
@@ -21,12 +21,14 @@ function InfoBlock({ title, children }: InfoBlockProps) {
 
 /** Phone, address and opening hours column on the contact page. */
 export function ContactInfo() {
+	const CONTACT = useSiteContent().settings.contact;
+
 	return (
 		<div className="flex flex-col gap-7.5">
 			<InfoBlock title="Fale conosco">
 				<p>
 					<a
-						href={`tel:${CONTACT.phoneE164}`}
+						href={`tel:${phoneE164(CONTACT.phone)}`}
 						className="transition-colors hover:text-brand"
 					>
 						{CONTACT.phone}

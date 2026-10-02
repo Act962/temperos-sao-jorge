@@ -62,17 +62,40 @@ e trata com `sharp`. Veja **Imagens** abaixo.
 
 ### Fluxo do conteúdo
 
-O admin grava no Postgres; o site público não lê banco nenhum. A ponte é um
-comando de publicação:
+Salvar no painel é publicar: o admin grava no Postgres e o site lê de lá a
+cada visita, sem comando nem novo deploy. A decisão está na
+[spec 0007](specs/0007-conteudo-em-tempo-real.md).
+
+| Peça | Onde |
+| --- | --- |
+| Catálogo na forma que o site exibe | `packages/core/src/use-cases/published-catalog.ts` |
+| Leitura do banco | `packages/api/src/published-catalog.ts` |
+| Ordem cache → banco → reserva | `apps/web/src/server/catalog-source.ts` |
+| Ligação com o Runtime Cache da Vercel e com a reserva | `apps/web/src/server/catalog.server.ts` |
+| O que rotas e componentes usam | `apps/web/src/lib/catalog.ts` |
+
+As rotas públicas pedem o catálogo no `loader` (`catalogQuery`) e os
+componentes o leem com `useCatalog()`. A rota raiz carrega uma vez; cabeçalho,
+rodapé e páginas compartilham o mesmo dado, e o HTML do servidor sai completo.
+
+**Cache.** O catálogo lido fica no Runtime Cache da Vercel, comum a todas as
+instâncias, sob a etiqueta `catalogo`. Toda gravação que dá certo em
+`/api/trpc` expira a etiqueta; enquanto ninguém edita, o site não consulta o
+banco. A validade de uma hora é só rede de proteção. Fora da Vercel o mesmo
+código usa um cache em memória.
+
+**Reserva.** Sem `DATABASE_URL`, ou com o banco fora do ar ou lento, o site
+serve `apps/web/src/data/{products,recipes}.ts` e registra a falha no log. A
+reserva é atualizada por um comando:
 
 ```bash
 pnpm run catalog:publish
 ```
 
-Ele lê o banco e regrava `apps/web/src/data/{products,recipes}.ts`, que é o que
-o build consome. Depois, `pnpm --filter web build` gera o site com o conteúdo
-novo. Os arquivos gerados trazem um aviso no topo e não devem ser editados à
-mão.
+Ele lê o banco e regrava os dois arquivos, que trazem um aviso no topo e não
+devem ser editados à mão. Vale rodar antes de um deploy, para a reserva não
+ficar muito atrás do banco — mas a edição não depende mais disso para ir ao
+ar.
 
 Carga inicial, dos arquivos TS para o banco (uma vez só):
 
@@ -80,31 +103,53 @@ Carga inicial, dos arquivos TS para o banco (uma vez só):
 pnpm run catalog:seed
 ```
 
-O `time` das receitas ("1 h 20 min") é derivado de `minutes` na publicação. Eram
+O `time` das receitas ("1 h 20 min") é derivado de `minutes` na leitura. Eram
 dois campos independentes, e bastava um ficar para trás para a receita exibir um
 tempo e cair no filtro de duração do outro.
 
 ## Painel de administração
 
 Em `/admin`, na mesma aplicação e na mesma origem do site — não há servidor
-separado. É onde o catálogo é editado antes de publicar.
+separado. O que é salvo aqui já vale no site.
 
 | Rota               | O que faz                                              |
 | ------------------ | ------------------------------------------------------ |
-| `/admin`           | Visão geral: contagens e produtos por família           |
-| `/admin/produtos`  | Criar, editar e remover produtos                        |
-| `/admin/receitas`  | Criar, editar e remover receitas                        |
+| `/admin`           | Visão geral: contagens, pendências e produtos por família |
+| `/admin/produtos`  | Criar, editar e remover produtos; busca e filtro por família |
+| `/admin/familias`  | Criar, renomear, reordenar e remover famílias           |
+| `/admin/receitas`  | Criar, editar e remover receitas; busca                 |
+| `/admin/inicio`    | Textos da home e o produto que representa cada família  |
+| `/admin/sobre`     | História da empresa e linha do tempo                    |
+| `/admin/privacidade`, `/admin/cookies` | As duas políticas legais            |
+| `/admin/configuracoes` | Contato, WhatsApp, redes sociais, assuntos do formulário |
+| `/admin/usuarios`  | Quem acessa o painel; troca da própria senha            |
+
+Configurações e textos das páginas são **documentos de conteúdo**: um por
+tela, guardado inteiro na tabela `site_content`, com as regras e o conteúdo
+padrão em `packages/core` (`domain/site-content*.ts`). Chegam ao site junto
+com o catálogo, pelo mesmo cache. Veja a
+[spec 0008](specs/0008-conteudo-do-site-no-painel.md).
+
+O painel foi desenhado para o celular: abaixo de `lg` a barra lateral vira
+gaveta, e as listagens são cartões em vez de tabelas que rolam de lado. Veja a
+[spec 0006](specs/0006-painel-responsivo-e-familias.md).
 
 O acesso é por e-mail e senha (Better-Auth). Sem sessão, o formulário de acesso
 ocupa o lugar do conteúdo em vez de redirecionar: entrar em `/admin/produtos`
 leva de volta a `/admin/produtos` depois do login. As rotas do painel saem do
 `noindex, nofollow` e não carregam o cabeçalho nem o rodapé do site.
 
-Primeiro usuário, com o servidor de pé:
+Primeiro usuário, com o servidor de pé e o banco ainda sem usuário nenhum:
 
 ```bash
-curl -X POST http://localhost:3000/api/auth/sign-up/email -H "Content-Type: application/json" -d '{"email":"voce@alimentossaojorge.com","password":"trocar-esta-senha","name":"Seu Nome"}'
+curl -X POST http://localhost:3001/api/auth/sign-up/email -H "Content-Type: application/json" -H "Origin: http://localhost:3001" -d '{"email":"voce@alimentossaojorge.com","password":"trocar-esta-senha","name":"Seu Nome"}'
 ```
+
+Esse endereço **só responde enquanto não existe usuário**. Depois do primeiro,
+devolve 403, e conta nova só nasce em `/admin/usuarios`, por quem já está
+dentro — senão qualquer pessoa que conhecesse o endereço viraria
+administradora de um painel que publica na hora. Veja a
+[spec 0009](specs/0009-usuarios-do-painel.md).
 
 Receita se edita em página própria (`/admin/receitas/nova` e
 `/admin/receitas/<slug>`), não em diálogo: doze ingredientes, oito passos e uma
@@ -268,20 +313,20 @@ O build de produção não usa esse caminho, então não é afetado.
 
 ### Banco de dados
 
-O site público **não usa banco**: o conteúdo é publicado estaticamente e as
-páginas sobem sem `DATABASE_URL`. Isso é garantido por design — `packages/db` e
-`packages/auth` criam suas instâncias sob demanda, e as rotas de API importam
-esses módulos dinamicamente, para que o env do servidor não seja validado no
-boot do site.
+O site público **sobe sem banco**: sem `DATABASE_URL` ele serve a reserva de
+`src/data/` e todas as páginas respondem 200. Isso é garantido por design —
+`packages/db` e `packages/auth` criam suas instâncias sob demanda, e tudo o
+que os alcança entra por `import()` dinâmico, para que o env do servidor não
+seja validado no boot do site.
 
-O Postgres é necessário só para autenticação e, adiante, para o admin:
+Com banco, o site lê o catálogo de lá e o painel funciona:
 
 ```bash
 pnpm run db:push
 ```
 
-Sem ele, `/` e as demais páginas respondem 200 normalmente; apenas
-`/api/auth/*` e `/api/trpc/*` falham.
+Sem ele, apenas `/api/auth/*` e `/api/trpc/*` falham, e o painel avisa que
+está indisponível.
 
 ## Como as mudanças começam
 
@@ -412,7 +457,8 @@ pnpm run db:start
 O e2e roda contra o **build de produção**, em duas suítes e dois servidores.
 
 **Sem banco** (porta 3101) é onde vive quase tudo, e não é descuido: o site
-público não usa Postgres, e a suíte existe para travar essa propriedade. Se
+público tem que responder sem Postgres, servindo a reserva, e a suíte existe
+para travar essa propriedade. Se
 alguém reintroduzir um import estático de `packages/auth` ou `packages/db` numa
 rota do site, ela quebra inteira. O servidor recebe `DATABASE_URL` **vazia** de
 propósito — um `.env` local com banco, ou a variável do job de CI, não conseguem
@@ -459,9 +505,14 @@ perde na próxima geração.
 ## Pendências conhecidas
 
 - Fotos editoriais e de receitas — veja `apps/web/ASSETS.md`.
-- Dados de contato em `src/data/site.ts` ainda são os do design (telefone,
-  endereço, CEP e o número de WhatsApp são exemplos). O botão de WhatsApp some
-  sozinho se `CONTACT.whatsapp.number` ficar vazio.
+- Os dados de contato padrão ainda são os do design (telefone, endereço, CEP e
+  WhatsApp são exemplos). Trocam-se em `/admin/configuracoes`; a visão geral
+  do painel acusa a pendência até alguém marcar o endereço como conferido.
+- A tabela `site_content` precisa existir no banco de produção:
+  `pnpm run db:push` antes do primeiro deploy desta versão.
+- Todo HTML carrega o catálogo e o conteúdo inteiros para a hidratação. Hoje
+  são poucas dezenas de KB; se o catálogo crescer muito, vale separar por
+  página.
 - Formulários de contato e newsletter validam e dão feedback, mas não têm
   backend — procure os `TODO` em `components/contact/contact-form.tsx` e
   `components/layout/newsletter-form.tsx`.

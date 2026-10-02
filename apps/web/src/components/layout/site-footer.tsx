@@ -3,8 +3,9 @@ import { BrandLogo } from "@/components/layout/brand-logo";
 import { NewsletterForm } from "@/components/layout/newsletter-form";
 import { SocialLinks } from "@/components/layout/social-links";
 import { WhatsappIcon } from "@/components/ui/whatsapp-icon";
-import { PRODUCT_FAMILIES } from "@/data/products";
-import { CONTACT, SITE, whatsappUrl } from "@/data/site";
+import { SITE } from "@/data/site";
+import { useCatalog } from "@/lib/catalog";
+import { phoneE164, whatsappUrl } from "@/lib/site-content";
 
 const INSTITUTIONAL_LINKS = [
 	{ label: "Sobre nós", to: "/sobre" },
@@ -30,7 +31,9 @@ const LINK = "text-cream-fg/75 transition-colors hover:text-cream-fg";
  */
 export function SiteFooter() {
 	const year = new Date().getFullYear();
-	const whatsapp = whatsappUrl();
+	const { families, content } = useCatalog();
+	const CONTACT = content.settings.contact;
+	const whatsapp = whatsappUrl(content.settings);
 
 	return (
 		<footer className="bg-brand pt-14 pb-10 font-sans text-[0.8125rem]">
@@ -51,7 +54,7 @@ export function SiteFooter() {
 							CEP {CONTACT.postalCode}
 						</p>
 						<p className="flex flex-col gap-1">
-							<a href={`tel:${CONTACT.phoneE164}`} className={LINK}>
+							<a href={`tel:${phoneE164(CONTACT.phone)}`} className={LINK}>
 								{CONTACT.phone}
 							</a>
 							<a href={`mailto:${CONTACT.email}`} className={LINK}>
@@ -78,7 +81,7 @@ export function SiteFooter() {
 						Produtos
 					</h2>
 					<ul className="mt-4 flex flex-col gap-2.5">
-						{PRODUCT_FAMILIES.map((family) => (
+						{families.map((family) => (
 							<li key={family.slug}>
 								<Link
 									to="/produtos/$familia"

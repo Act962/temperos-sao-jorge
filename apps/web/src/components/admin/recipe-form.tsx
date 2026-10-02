@@ -1,3 +1,4 @@
+import { paraSlug } from "@my-better-t-app/core";
 import { Button, buttonVariants } from "@my-better-t-app/ui/components/button";
 import { Input } from "@my-better-t-app/ui/components/input";
 import { Label } from "@my-better-t-app/ui/components/label";
@@ -48,8 +49,20 @@ interface RecipeFormProps {
 	aoSalvar: (dados: ReceitaFormulario) => void;
 }
 
-const CLASSE_SELECT =
-	"h-9 rounded-md border border-input bg-transparent px-3 font-sans text-sm";
+const CLASSE_SELECT = "border border-input px-3 font-sans";
+
+/**
+ * Sugestão de endereço a partir do nome. É só o ponto de partida do campo:
+ * quem aceita ou recusa o slug continua sendo o domínio, no envio.
+ */
+function slugSugerido(nome: string): string {
+	try {
+		return paraSlug(nome);
+	} catch {
+		// Nome ainda vazio ou só com pontuação: nada a sugerir.
+		return "";
+	}
+}
 
 /**
  * Formulário de receita, em página própria.
@@ -71,6 +84,7 @@ export function RecipeForm({
 }: RecipeFormProps) {
 	const ids = {
 		slug: useId(),
+		ajudaSlug: useId(),
 		name: useId(),
 		summary: useId(),
 		minutes: useId(),
@@ -80,11 +94,21 @@ export function RecipeForm({
 		image: useId(),
 	};
 	const [dados, setDados] = useState(inicial);
+	// Enquanto ninguém mexer no slug, ele acompanha o nome: quem escreve uma
+	// receita pensa no título, não no endereço dela.
+	const [slugManual, setSlugManual] = useState(editando);
 
 	const mudar = <C extends keyof ReceitaFormulario>(
 		campo: C,
 		valor: ReceitaFormulario[C],
 	) => setDados((atual) => ({ ...atual, [campo]: valor }));
+
+	const mudarNome = (nome: string) =>
+		setDados((atual) => ({
+			...atual,
+			name: nome,
+			slug: slugManual ? atual.slug : slugSugerido(nome),
+		}));
 
 	return (
 		<form
@@ -105,25 +129,8 @@ export function RecipeForm({
 				});
 			}}
 		>
-			<div className="flex flex-col gap-6 rounded-lg border border-brand/12 bg-cream-raised p-6">
+			<div className="flex flex-col gap-6 rounded-lg border border-brand/12 bg-cream-raised p-4 sm:p-6">
 				<div className="grid gap-4 sm:grid-cols-2">
-					<div className="flex flex-col gap-1.5">
-						<Label htmlFor={ids.slug}>Slug</Label>
-						<Input
-							id={ids.slug}
-							value={dados.slug}
-							readOnly={editando}
-							required
-							placeholder="arroz-a-grega"
-							onChange={(evento) => mudar("slug", evento.target.value)}
-						/>
-						{editando ? (
-							<p className="font-sans text-ink-faint text-xs">
-								O slug é a URL da receita e não muda depois de criada.
-							</p>
-						) : null}
-					</div>
-
 					<div className="flex flex-col gap-1.5">
 						<Label htmlFor={ids.name}>Nome</Label>
 						<Input
@@ -131,8 +138,29 @@ export function RecipeForm({
 							value={dados.name}
 							required
 							placeholder="Arroz à Grega"
-							onChange={(evento) => mudar("name", evento.target.value)}
+							onChange={(evento) => mudarNome(evento.target.value)}
 						/>
+					</div>
+
+					<div className="flex flex-col gap-1.5">
+						<Label htmlFor={ids.slug}>Endereço no site</Label>
+						<Input
+							id={ids.slug}
+							value={dados.slug}
+							readOnly={editando}
+							required
+							placeholder="arroz-a-grega"
+							aria-describedby={ids.ajudaSlug}
+							onChange={(evento) => {
+								setSlugManual(true);
+								mudar("slug", evento.target.value);
+							}}
+						/>
+						<p id={ids.ajudaSlug} className="font-sans text-ink-faint text-xs">
+							{editando
+								? "É a URL da receita e não muda depois de criada."
+								: `A receita fica em /receitas/${dados.slug || "…"}`}
+						</p>
 					</div>
 				</div>
 
@@ -222,8 +250,8 @@ export function RecipeForm({
 				</div>
 
 				<p className="-mt-3 font-sans text-ink-faint text-xs">
-					O tempo exibido ("1 h 20 min") e o do JSON-LD são derivados dos
-					minutos na publicação.
+					O tempo que o site exibe ("1 h 20 min") é calculado a partir dos
+					minutos.
 				</p>
 
 				<div className="flex flex-col gap-1.5">

@@ -22,10 +22,46 @@ mas não lintados, por isso mesmo.
 ## Estrutura
 
 - Rota nova: `apps/web/src/routes/admin.<assunto>.tsx`, entrando sozinha no
-  `NAV` de `components/admin/admin-shell.tsx`.
+  `NAV` de `components/admin/nav.ts` — a barra lateral, a gaveta do celular e
+  a trilha da barra superior saem dessa lista.
 - Toda tela abre com `<PageHeading>` e usa `<RouteLoader />` enquanto carrega.
-- Filtro de listagem vai na URL, com `validateSearch` — link para uma família
-  específica precisa funcionar colado no navegador.
+- Filtro e busca de listagem vão na URL, com `validateSearch` — link para uma
+  família específica precisa funcionar colado no navegador.
+
+## Celular primeiro
+
+O painel é usado no celular. Listagem é `<ItemList>` + `<ItemRow>`
+(`components/admin/item-list.tsx`): uma marcação só, grade no desktop e cartão
+no celular. Não use `<Table>` — ela rola de lado e esconde as ações.
+
+Os primitivos shadcn são ajustados para o painel em `apps/web/src/index.css`,
+sob `[data-painel]`: alvo de toque de 44 px, cores da marca. Não repita
+`className` de tamanho em cada botão ou campo.
+
+Remoção pede confirmação com `<ConfirmDialog>`, nunca `confirm()`. Lista vazia
+é `<EmptyState>`, com texto diferente para "nada cadastrado" e "nada
+encontrado".
+
+## Tela de conteúdo
+
+Configurações, Início, Sobre e as políticas editam um **documento inteiro**
+cada. As peças estão em `components/admin/form-kit.tsx`:
+
+- `useDocumentForm(inicial)` guarda o rascunho, diz se há alteração e avisa
+  antes de sair da página com trabalho pendente.
+- `<FormSection>` é um cartão por seção do site, na ordem em que aparece, com
+  a etiqueta de onde aquilo é exibido.
+- `<TextField>`, `<EditableList>` (subir, descer, remover, adicionar) e
+  `<SaveBar>`, presa ao pé da tela.
+
+Depois de salvar, `form.aceitar(salvo)` — o servidor devolve o documento já
+aparado pelo domínio, e é ele que a tela passa a mostrar.
+
+## Slug não se pergunta
+
+Quem cadastra pensa no nome. Produto e família nascem com o slug derivado por
+`paraSlug` no caso de uso; a receita mostra o endereço sugerido e deixa
+trocar, porque ele é a URL pública.
 
 ## Regra não se repete na tela
 

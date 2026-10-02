@@ -1,6 +1,6 @@
 import { cn } from "@my-better-t-app/ui/lib/utils";
 import type { ComponentType, SVGProps } from "react";
-import { SOCIAL_LINKS } from "@/data/site";
+import { socialName, useSiteContent } from "@/lib/site-content";
 
 /**
  * Brand glyphs are drawn inline, transcribed from the design canvas —
@@ -66,18 +66,23 @@ interface SocialLinksProps {
 
 /** Social profile buttons rendered on the red footer surface. */
 export function SocialLinks({ className }: SocialLinksProps) {
+	const links = useSiteContent().settings.social;
+
+	// Nenhum perfil cadastrado: sem lista vazia na página.
+	if (links.length === 0) return null;
+
 	return (
 		<ul className={cn("flex gap-3", className)}>
-			{SOCIAL_LINKS.map((link) => {
-				const Icon = ICONS[link.icon];
+			{links.map((link) => {
+				const Icon = ICONS[link.platform];
 				if (!Icon) return null;
 				return (
-					<li key={link.name}>
+					<li key={link.platform}>
 						<a
 							href={link.href}
 							target="_blank"
 							rel="noreferrer noopener"
-							aria-label={`${link.name} da São Jorge Alimentos`}
+							aria-label={`${socialName(link.platform)} da São Jorge Alimentos`}
 							className="flex size-[34px] items-center justify-center rounded-md bg-cream-fg/15 text-cream-fg transition-colors hover:bg-cream-fg/30"
 						>
 							<Icon className="size-[18px]" />

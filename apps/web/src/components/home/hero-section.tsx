@@ -1,15 +1,20 @@
+import { Fragment } from "react";
 import { BrandLink } from "@/components/ui/brand-button";
+import { useSiteContent } from "@/lib/site-content";
 
 /**
  * Above-the-fold hero. The photograph is eager and high-priority because it is
  * the Largest Contentful Paint element on the home page.
  */
 export function HeroSection() {
+	const { hero } = useSiteContent().home;
+	const linhas = hero.title.split("\n");
+
 	return (
 		<section className="relative h-[520px] overflow-hidden bg-night md:h-160">
 			<img
 				src="/images/hero.webp"
-				alt="Prato de massa servido à mesa com temperos São Jorge"
+				alt={hero.imageAlt}
 				fetchPriority="high"
 				decoding="async"
 				className="absolute inset-0 size-full animate-brand-ken-burns object-cover"
@@ -27,15 +32,19 @@ export function HeroSection() {
 
 			<div className="shell relative flex h-full flex-col justify-center">
 				<h1 className="animate-brand-rise font-display font-extrabold text-[#fff8ec] text-[3rem] uppercase leading-[0.94] tracking-[0.01em] [text-shadow:0_3px_18px_rgba(0,0,0,0.45)] sm:text-[4rem] lg:text-[4.75rem]">
-					Mais sabor
-					<br />
-					em sua mesa
+					{linhas.map((linha, indice) => (
+						// O título é curto e as linhas não se repetem; a posição
+						// desempata se alguém escrever duas iguais.
+						<Fragment key={`${indice}-${linha}`}>
+							{indice > 0 ? <br /> : null}
+							{linha}
+						</Fragment>
+					))}
 					<span className="text-[#d93a3a]">.</span>
 				</h1>
 
 				<p className="mt-6.5 max-w-[26rem] animate-brand-rise font-sans text-[#efe3d2] text-[1.0625rem] leading-relaxed [animation-delay:0.18s]">
-					Há mais de 40 anos levando qualidade e sabor para o dia a dia das
-					famílias brasileiras.
+					{hero.text}
 				</p>
 
 				<div className="mt-8 flex animate-brand-rise flex-wrap gap-3 [animation-delay:0.34s]">

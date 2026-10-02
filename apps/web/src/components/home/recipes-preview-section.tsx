@@ -3,13 +3,15 @@ import { BrandLink } from "@/components/ui/brand-button";
 import { CurveDivider } from "@/components/ui/curve-divider";
 import { Reveal } from "@/components/ui/reveal";
 import { Eyebrow, SectionHeading } from "@/components/ui/section-heading";
-import { RECIPES } from "@/data/recipes";
+import { useCatalog } from "@/lib/catalog";
 
 const PREVIEW_COUNT = 3;
 
 /** Three-recipe teaser that sits between the product band and the values bar. */
 export function RecipesPreviewSection() {
-	const recipes = RECIPES.slice(0, PREVIEW_COUNT);
+	const catalog = useCatalog();
+	const recipes = catalog.recipes.slice(0, PREVIEW_COUNT);
+	const texts = catalog.content.home.recipes;
 
 	return (
 		<section className="relative mt-[-2px] bg-cream pt-21">
@@ -21,11 +23,11 @@ export function RecipesPreviewSection() {
 					<Eyebrow className="mb-3.5">Receitas</Eyebrow>
 					<Reveal>
 						<SectionHeading className="text-[2.5rem]">
-							Sabor que inspira
+							{texts.title}
 						</SectionHeading>
 					</Reveal>
 					<p className="mt-4.5 font-sans text-[0.9375rem] text-ink-muted leading-[1.65]">
-						Receitas práticas, deliciosas e feitas para momentos especiais.
+						{texts.text}
 					</p>
 					<BrandLink
 						to="/receitas"

@@ -4,7 +4,10 @@ import { RECIPES } from "@/data/recipes";
 import { getSiteRoutes } from "@/lib/site-routes";
 
 describe("registro de rotas do sitemap", () => {
-	const routes = getSiteRoutes();
+	const routes = getSiteRoutes({
+		families: PRODUCT_FAMILIES,
+		recipes: RECIPES,
+	});
 	const paths = routes.map((route) => route.path);
 
 	it("inclui uma URL por família", () => {
