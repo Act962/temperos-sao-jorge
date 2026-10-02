@@ -54,8 +54,10 @@ direto ao código.
 pnpm run ci
 ```
 
-Roda Biome, tipos, unitários e build. O e2e é `pnpm run test:e2e` e precisa do
-build de produção. Não há `dev` com HMR — veja o porquê no `README.md`.
+Roda Biome, build, tipos e unitários — o build vem antes porque é ele que
+gera `routeTree.gen.ts`, sem o qual os tipos não fecham num checkout limpo.
+O e2e é `pnpm run test:e2e` e precisa do build de produção. Não há `dev` com
+HMR — veja o porquê no `README.md`.
 
 ## Idiomas
 

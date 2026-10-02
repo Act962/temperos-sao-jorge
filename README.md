@@ -492,7 +492,7 @@ pnpm run db:start
 ### CI
 
 `.github/workflows/ci.yml` roda em push para `main` e em pull request, em dois
-jobs: verificação (`biome ci`, tipos, unitários, build) e, se passar, o
+jobs: verificação (`biome ci`, build, tipos, unitários) e, se passar, o
 end-to-end com o relatório do Playwright anexado como artefato. O job de
 end-to-end sobe um Postgres de serviço, aplica o schema e roda as duas suítes;
 o de verificação continua sem banco, então os testes de integração se pulam
