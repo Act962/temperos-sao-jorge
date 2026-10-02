@@ -377,6 +377,10 @@ São o resumo do que este README explica por extenso, no ponto em que a decisão
 
 ## Deploy
 
+O passo a passo para subir do zero, com todas as variáveis de ambiente, está
+em [`docs/DEPLOY.md`](docs/DEPLOY.md). Esta seção explica por que o
+empacotamento é como é.
+
 O app vai para a **Vercel**; a Cloudflare entra só com R2 e CDN das imagens
 (veja a [spec 0010](specs/0010-envio-de-fotos-pelo-painel.md)). `sharp` é
 binário nativo e viaja dentro da função: por isso é dependência direta de
