@@ -7,6 +7,7 @@ import {
 import { InMemoryUserDirectory } from "../testing/in-memory-user-directory";
 import {
 	cadastroPeloSiteAberto,
+	confirmarPrimeiroCadastro,
 	criarUsuario,
 	listarUsuarios,
 	removerUsuario,
@@ -29,6 +30,39 @@ describe("cadastro pelo site", () => {
 		);
 		// Depois disso, quem conhecesse o endereço da API viraria administrador.
 		expect(await cadastroPeloSiteAberto(diretorio)).toBe(false);
+	});
+});
+
+describe("duas pessoas se cadastrando ao mesmo tempo num banco vazio", () => {
+	const dados = (nome: string) => ({
+		name: nome,
+		email: `${nome.toLowerCase()}@alimentossaojorge.com`,
+		password: "senha-forte",
+	});
+
+	it("só a primeira conta fica; a segunda desfaz a própria criação", async () => {
+		const vazio = new InMemoryUserDirectory();
+
+		// As duas passaram pela conferência antes de qualquer conta existir.
+		expect(await cadastroPeloSiteAberto(vazio)).toBe(true);
+		expect(await cadastroPeloSiteAberto(vazio)).toBe(true);
+		const primeira = await vazio.create(dados("Ana"));
+		const segunda = await vazio.create(dados("Bia"));
+
+		// A ordem em que confirmam não muda quem vence.
+		expect(await confirmarPrimeiroCadastro(vazio, segunda.id)).toBe(false);
+		expect(await confirmarPrimeiroCadastro(vazio, primeira.id)).toBe(true);
+
+		expect((await vazio.list()).map((u) => u.id)).toEqual([primeira.id]);
+		expect(await cadastroPeloSiteAberto(vazio)).toBe(false);
+	});
+
+	it("o cadastro sozinho é confirmado sem remover nada", async () => {
+		const vazio = new InMemoryUserDirectory();
+		const unica = await vazio.create(dados("Ana"));
+
+		expect(await confirmarPrimeiroCadastro(vazio, unica.id)).toBe(true);
+		expect(await vazio.list()).toHaveLength(1);
 	});
 });
 

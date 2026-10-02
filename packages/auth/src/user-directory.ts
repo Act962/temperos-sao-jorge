@@ -5,6 +5,7 @@ import type {
 } from "@my-better-t-app/core";
 import { getDb } from "@my-better-t-app/db";
 import {
+	acharContaMaisAntiga,
 	acharContaPorEmail,
 	listarContas,
 	removerConta,
@@ -26,6 +27,10 @@ export class BetterAuthUserDirectory implements UserDirectory {
 
 	findByEmail(email: string): Promise<AdminUser | null> {
 		return acharContaPorEmail(getDb(), email);
+	}
+
+	findOldest(): Promise<AdminUser | null> {
+		return acharContaMaisAntiga(getDb());
 	}
 
 	async create(entrada: NovoUsuario): Promise<AdminUser> {

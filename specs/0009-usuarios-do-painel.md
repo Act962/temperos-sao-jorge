@@ -26,6 +26,13 @@ o que permite o primeiro acesso num banco vazio, e o preparo do e2e. Com um
 usuário cadastrado, responde 403, e conta nova só nasce pela tela, por quem já
 está dentro.
 
+**Só um primeiro usuário, mesmo com dois cadastros simultâneos.** Conferir
+"não há usuário" antes de criar não basta: duas requisições juntas passam as
+duas. Depois de criar, a rota confere se a conta é a mais antiga do banco; a
+que não for é desfeita e recebe o mesmo 403. A alternativa — uma trava de
+sessão do Postgres em volta do cadastro — não atravessa um pool em modo
+transação, que é o que o banco de produção usa.
+
 A barreira fica na rota HTTP, não num gancho do Better-Auth: a criação pela
 tela usa a API do Better-Auth do lado do servidor, e um gancho barraria as
 duas. A rota é o único caminho de fora para dentro.
@@ -53,6 +60,8 @@ Alternativas descartadas:
       conta é criada.
 - [x] Dado um banco com usuário, quando alguém se cadastra pelo site, então
       recebe 403 e nenhuma conta é criada.
+- [x] Dados dois cadastros simultâneos num banco sem usuários, então só a
+      conta mais antiga permanece.
 - [x] Dado um usuário criado pela tela, então ele entra no painel com a senha
       definida.
 - [x] Dado um e-mail já cadastrado, então a criação é recusada com a mensagem
@@ -78,7 +87,10 @@ alterou o quê.
 - Barreira do cadastro público: `apps/web/src/routes/api.auth.$.ts`
 - Tela: `apps/web/src/routes/admin.usuarios.tsx`
 - Testes:
-  - `packages/core/src/use-cases/users.test.ts` — todas as regras, em memória
+  - `packages/core/src/use-cases/users.test.ts` — todas as regras, em
+    memória, inclusive os dois cadastros simultâneos
+  - `packages/db/src/repositories/users.integration.test.ts` — qual conta é a
+    mais antiga, com empate no instante
   - `apps/web/e2e/com-banco/preparo.setup.ts` — cadastro pelo site num banco
     sem usuários
   - `apps/web/e2e/com-banco/admin-usuarios.spec.ts` — 403 no cadastro público,

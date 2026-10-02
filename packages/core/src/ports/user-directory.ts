@@ -11,6 +11,8 @@ import type { AdminUser, NovoUsuario } from "../domain/user";
 export interface UserDirectory {
 	list(): Promise<AdminUser[]>;
 	findByEmail(email: string): Promise<AdminUser | null>;
+	/** A conta criada primeiro. Empate no instante desempata pelo id. */
+	findOldest(): Promise<AdminUser | null>;
 	create(usuario: NovoUsuario): Promise<AdminUser>;
 	/** Remove a conta e encerra as sessões dela. */
 	delete(id: string): Promise<void>;

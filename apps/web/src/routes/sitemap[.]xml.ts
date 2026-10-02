@@ -32,7 +32,11 @@ export const Route = createFileRoute("/sitemap.xml")({
 				return new Response(renderSitemap(await loadCatalog()), {
 					headers: {
 						"content-type": "application/xml; charset=utf-8",
-						"cache-control": "public, max-age=3600",
+						// Sem prazo no navegador nem no CDN: o sitemap sai do mesmo
+						// cache do catálogo, que é expirado quando o painel grava. Com
+						// uma hora de `max-age`, uma receita nova ficaria fora dele
+						// mesmo com o catálogo já atualizado — e gerar de novo é barato.
+						"cache-control": "public, max-age=0, must-revalidate",
 					},
 				});
 			},

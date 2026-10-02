@@ -71,3 +71,30 @@ export async function cadastroPeloSiteAberto(
 ): Promise<boolean> {
 	return (await diretorio.list()).length === 0;
 }
+
+/**
+ * Confirma que a conta recém-criada pelo site é mesmo a primeira.
+ *
+ * `cadastroPeloSiteAberto` sozinho não basta: duas requisições chegando juntas
+ * a um banco vazio passam as duas pela conferência antes de qualquer conta
+ * existir, e nasceriam dois administradores. Depois de criar, cada uma
+ * pergunta quem é a conta mais antiga — só uma é, e a outra desfaz a própria
+ * criação.
+ *
+ * Conferir depois, em vez de travar antes, é de propósito: uma trava de sessão
+ * do Postgres não atravessa um pool em modo transação, que é o que o banco de
+ * produção usa. A ordem das contas é a mesma para as duas requisições, então
+ * o resultado não depende de quem chega primeiro a esta função.
+ *
+ * Devolve `false` quando a conta foi desfeita.
+ */
+export async function confirmarPrimeiroCadastro(
+	diretorio: UserDirectory,
+	idCriado: string,
+): Promise<boolean> {
+	const primeira = await diretorio.findOldest();
+	if (primeira === null || primeira.id === idCriado) return true;
+
+	await diretorio.delete(idCriado);
+	return false;
+}

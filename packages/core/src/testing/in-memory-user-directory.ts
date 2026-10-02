@@ -26,6 +26,11 @@ export class InMemoryUserDirectory implements UserDirectory {
 		);
 	}
 
+	async findOldest(): Promise<AdminUser | null> {
+		// O Map preserva a ordem de inserção.
+		return this.usuarios.values().next().value ?? null;
+	}
+
 	async create(entrada: NovoUsuario): Promise<AdminUser> {
 		const usuario = {
 			id: `usuario-${this.proximo++}`,

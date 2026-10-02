@@ -35,6 +35,21 @@ export async function acharContaPorEmail(
 }
 
 /**
+ * A conta criada primeiro. O id desempata duas contas do mesmo instante, para
+ * a resposta ser a mesma em qualquer requisição que pergunte.
+ */
+export async function acharContaMaisAntiga(
+	db: Database,
+): Promise<Conta | null> {
+	const [linha] = await db
+		.select(CAMPOS)
+		.from(user)
+		.orderBy(asc(user.createdAt), asc(user.id))
+		.limit(1);
+	return linha ?? null;
+}
+
+/**
  * Sessões e credenciais vão junto, pela chave estrangeira em cascata: quem é
  * removido perde o acesso na hora, não quando a sessão vencer.
  */
