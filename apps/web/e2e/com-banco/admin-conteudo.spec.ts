@@ -39,12 +39,14 @@ test("sem nada salvo, o site mostra o conteúdo padrão", async ({ page }) => {
 	).toBeVisible();
 
 	// A contagem dos compromissos sai do catálogo, não de um número escrito.
+	// Confere a forma, não o número: os testes de `admin-dados` rodam em outro
+	// processo contra o mesmo banco e criam produto e família no meio do
+	// caminho. Que o número é o do catálogo, quem prova é o teste de
+	// `preencherContagens` no domínio.
 	const compromissos = page.getByRole("region", {
 		name: "Compromissos da São Jorge Alimentos",
 	});
-	await expect(compromissos).toContainText(
-		`${PRODUCTS.length} produtos em ${PRODUCT_FAMILIES.length} famílias`,
-	);
+	await expect(compromissos).toContainText(/\d+ produtos em \d+ famílias/);
 	await expect(compromissos).not.toContainText("{produtos}");
 
 	// Endereço ainda não conferido: nada de LocalBusiness para o Google.
