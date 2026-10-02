@@ -1,21 +1,11 @@
-import { PRODUCT_FAMILIES, PRODUCTS } from "@/data/products";
+import type { Product, ProductFamily } from "@/data/products";
 
 /**
- * As oito famílias na home, cada uma representada por um packshot.
+ * As famílias na home, cada uma representada por um packshot.
  *
- * O canvas original destacava só quatro; as outras quatro só existiam dentro do
- * menu suspenso, sem nenhuma porta de entrada para quem não o abrisse.
+ * Qual produto representa cada família é escolhido no painel (Início) e chega
+ * aqui por parâmetro.
  */
-const REPRESENTATIVE_PRODUCT: Record<string, string> = {
-	chas: "camomila",
-	"ervas-e-especiarias": "oregano",
-	"farinhas-naturais": "farinha-de-beterraba",
-	institucional: "paprica-doce-1-kg",
-	"molhos-e-pastas": "molho-de-alho-jorge-batista-500-ml",
-	"sementes-e-graos-naturais": "semente-de-chia",
-	"temperos-em-po": "paprica-doce",
-	"temperos-liquidos-prontos": "tempero-tradicional-500-ml",
-};
 
 export interface FeaturedFamily {
 	readonly slug: string;
@@ -25,11 +15,26 @@ export interface FeaturedFamily {
 	readonly imageAlt: string;
 }
 
-export const FEATURED_FAMILIES: readonly FeaturedFamily[] =
-	PRODUCT_FAMILIES.flatMap((family) => {
-		const product = PRODUCTS.find(
-			(item) => item.slug === REPRESENTATIVE_PRODUCT[family.slug],
+/**
+ * Recebe o catálogo em vez de importá-lo: as famílias e os produtos vêm do
+ * banco a cada visita, e uma família criada no painel precisa aparecer aqui.
+ *
+ * Sem representante escolhido — família nova, ou produto que saiu do
+ * catálogo — vale o primeiro produto da família. Antes a família sumia da
+ * home em silêncio. Só fica de fora a família ainda sem produto nenhum.
+ */
+export function featuredFamilies(
+	families: readonly ProductFamily[],
+	products: readonly Product[],
+	representatives: Readonly<Record<string, string>>,
+): readonly FeaturedFamily[] {
+	return families.flatMap((family) => {
+		const daFamilia = products.filter(
+			(item) => item.familySlug === family.slug,
 		);
+		const product =
+			daFamilia.find((item) => item.slug === representatives[family.slug]) ??
+			daFamilia[0];
 		if (!product) return [];
 		return [
 			{
@@ -41,3 +46,4 @@ export const FEATURED_FAMILIES: readonly FeaturedFamily[] =
 			},
 		];
 	});
+}

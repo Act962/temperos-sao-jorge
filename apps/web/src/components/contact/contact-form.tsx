@@ -2,7 +2,7 @@ import { cn } from "@my-better-t-app/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useId, useState } from "react";
 import { toast } from "sonner";
-import { CONTACT_SUBJECTS } from "@/data/site";
+import { useSiteContent } from "@/lib/site-content";
 
 const FIELD_CLASS =
 	"rounded-[4px] border border-brand/22 bg-cream-raised px-3.5 py-3 font-sans text-[0.9375rem] text-ink outline-none placeholder:text-ink-faint focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/20";
@@ -44,6 +44,7 @@ export function ContactForm() {
 		message: useId(),
 	};
 	const [submitting, setSubmitting] = useState(false);
+	const subjects = useSiteContent().settings.contactSubjects;
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -104,7 +105,7 @@ export function ContactForm() {
 					<option value="" disabled>
 						Selecione
 					</option>
-					{CONTACT_SUBJECTS.map((subject) => (
+					{subjects.map((subject) => (
 						<option key={subject} value={subject}>
 							{subject}
 						</option>

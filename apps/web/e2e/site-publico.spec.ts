@@ -85,6 +85,10 @@ test.describe("SEO", () => {
 		const sitemap = await request.get("/sitemap.xml");
 		expect(sitemap.status()).toBe(200);
 		expect(sitemap.headers()["content-type"]).toContain("xml");
+		// Nada de guardar por uma hora: receita criada no painel tem que entrar
+		// no sitemap na leitura seguinte, e cache HTTP não é expirado pela
+		// gravação.
+		expect(sitemap.headers()["cache-control"]).toContain("max-age=0");
 		expect((await sitemap.text()).match(/<loc>/g)?.length).toBe(21);
 
 		const robots = await request.get("/robots.txt");

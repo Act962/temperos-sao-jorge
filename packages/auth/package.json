@@ -13,6 +13,7 @@
 		"check-types": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@my-better-t-app/core": "workspace:*",
 		"@my-better-t-app/db": "workspace:*",
 		"@my-better-t-app/env": "workspace:*",
 		"better-auth": "catalog:",

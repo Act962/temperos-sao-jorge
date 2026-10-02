@@ -1,6 +1,6 @@
 import { cn } from "@my-better-t-app/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { PRODUCT_FAMILIES } from "@/data/products";
+import { useCatalog } from "@/lib/catalog";
 
 interface FamilyFilterProps {
 	/** Slug of the family being shown, or null on the "Todos" listing. */
@@ -22,6 +22,8 @@ const CHIP_ACTIVE = "bg-brand text-cream-fg";
  * crawlable, shareable URL of its own instead of client-side state.
  */
 export function FamilyFilter({ activeSlug }: FamilyFilterProps) {
+	const { families } = useCatalog();
+
 	return (
 		<nav aria-label="Filtrar por família de produtos">
 			<ul className="flex flex-wrap justify-center gap-x-2.5 gap-y-3">
@@ -37,7 +39,7 @@ export function FamilyFilter({ activeSlug }: FamilyFilterProps) {
 						Todos
 					</Link>
 				</li>
-				{PRODUCT_FAMILIES.map((family) => {
+				{families.map((family) => {
 					const active = family.slug === activeSlug;
 					return (
 						<li key={family.slug}>

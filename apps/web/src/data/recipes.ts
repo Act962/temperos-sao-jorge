@@ -1,6 +1,9 @@
 // Gerado por packages/db/scripts/publish-catalog.mjs — não edite à mão.
 // A fonte da verdade é o Postgres; rode `pnpm run catalog:publish` para
 // regravar este arquivo a partir do banco.
+//
+// É a reserva que o site serve sem banco. As rotas e os componentes leem o
+// catálogo por `@/lib/catalog` e daqui só importam tipo.
 
 export const RECIPE_CATEGORIES = [
 	"Almoço",
@@ -10,18 +13,6 @@ export const RECIPE_CATEGORIES = [
 ] as const;
 
 export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number];
-
-export const RECIPE_FILTERS = [
-	"Todas",
-	"Almoço",
-	"Jantar",
-	"Lanches",
-	"Festas",
-	"Até 30 min",
-	"+ 30 min",
-] as const;
-
-export type RecipeFilter = (typeof RECIPE_FILTERS)[number];
 
 export interface Recipe {
 	readonly slug: string;
@@ -226,16 +217,4 @@ export const RECIPES: readonly Recipe[] = [
 
 export function getRecipeBySlug(slug: string): Recipe | undefined {
 	return RECIPES.find((recipe) => recipe.slug === slug);
-}
-
-export function filterRecipes(
-	recipes: readonly Recipe[],
-	filter: RecipeFilter,
-): readonly Recipe[] {
-	if (filter === "Todas") return recipes;
-	if (filter === "Até 30 min")
-		return recipes.filter((recipe) => recipe.minutes <= 30);
-	if (filter === "+ 30 min")
-		return recipes.filter((recipe) => recipe.minutes > 30);
-	return recipes.filter((recipe) => recipe.category === filter);
 }

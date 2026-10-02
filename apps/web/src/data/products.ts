@@ -1,6 +1,9 @@
 // Gerado por packages/db/scripts/publish-catalog.mjs — não edite à mão.
 // A fonte da verdade é o Postgres; rode `pnpm run catalog:publish` para
 // regravar este arquivo a partir do banco.
+//
+// É a reserva que o site serve sem banco. As rotas e os componentes leem o
+// catálogo por `@/lib/catalog` e daqui só importam tipo.
 
 export interface ProductFamily {
 	readonly slug: string;

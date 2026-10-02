@@ -2,7 +2,7 @@ import { cn } from "@my-better-t-app/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { getProductsByFamily, PRODUCT_FAMILIES } from "@/data/products";
+import { getProductsByFamily, useCatalog } from "@/lib/catalog";
 
 interface ProductsMegaMenuProps {
 	open: boolean;
@@ -22,11 +22,18 @@ interface ProductsMegaMenuProps {
  * sai discreta em vez da nativa clara sobre o vermelho.
  */
 export function ProductsMegaMenu({ open, onNavigate }: ProductsMegaMenuProps) {
-	const [activeFamily, setActiveFamily] = useState(PRODUCT_FAMILIES[0].slug);
+	const catalog = useCatalog();
+	const [activeFamily, setActiveFamily] = useState(catalog.families[0]?.slug);
+	// A família ativa pode ter sido removida no painel entre uma leitura e
+	// outra: nesse caso o painel volta para a primeira.
 	const family =
-		PRODUCT_FAMILIES.find((item) => item.slug === activeFamily) ??
-		PRODUCT_FAMILIES[0];
-	const products = getProductsByFamily(family.slug);
+		catalog.families.find((item) => item.slug === activeFamily) ??
+		catalog.families[0];
+
+	// Catálogo sem família nenhuma: não há o que abrir.
+	if (!family) return null;
+
+	const products = getProductsByFamily(catalog, family.slug);
 
 	return (
 		<div
@@ -40,7 +47,7 @@ export function ProductsMegaMenu({ open, onNavigate }: ProductsMegaMenuProps) {
 		>
 			<div className="relative grid grid-cols-[15.5rem_1fr] overflow-hidden rounded-b-xl bg-brand shadow-[0_26px_60px_rgba(43,10,10,0.4)]">
 				<nav aria-label="Famílias de produtos" className="bg-brand-dark py-2.5">
-					{PRODUCT_FAMILIES.map((item) => {
+					{catalog.families.map((item) => {
 						const active = item.slug === family.slug;
 						return (
 							<Link

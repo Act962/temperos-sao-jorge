@@ -1,6 +1,7 @@
 import type { Product, ProductFamily } from "../domain/product";
 import type { Recipe } from "../domain/recipe";
 import type { Slug } from "../domain/slug";
+import type { SiteContentRepository } from "./site-content-repository";
 
 /**
  * Portas de persistência.
@@ -14,6 +15,7 @@ export interface ProductRepository {
 	listFamilies(): Promise<ProductFamily[]>;
 	findFamily(slug: Slug): Promise<ProductFamily | null>;
 	saveFamily(family: ProductFamily): Promise<void>;
+	deleteFamily(slug: Slug): Promise<void>;
 
 	list(): Promise<Product[]>;
 	listByFamily(familySlug: Slug): Promise<Product[]>;
@@ -34,4 +36,6 @@ export interface RecipeRepository {
 export interface CatalogRepositories {
 	products: ProductRepository;
 	recipes: RecipeRepository;
+	/** Configurações e textos das páginas — tudo o que o site exibe além do catálogo. */
+	content: SiteContentRepository;
 }

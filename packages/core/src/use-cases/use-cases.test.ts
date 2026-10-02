@@ -15,8 +15,12 @@ import {
 	listarFamiliasComContagem,
 	listarProdutosDaFamilia,
 	obterProduto,
+	removerFamilia,
 	removerProduto,
+	renomearFamilia,
+	reordenarFamilias,
 } from "./products";
+import { montarCatalogoPublicado } from "./published-catalog";
 import { atualizarReceita, criarNovaReceita, obterReceita } from "./recipes";
 
 /**
@@ -206,11 +210,108 @@ describe("remoção de produto", () => {
 	});
 });
 
+describe("criação pelo painel, só com o nome", () => {
+	it("deriva o slug do nome do produto", async () => {
+		const produto = await criarNovoProduto(repos.products, {
+			name: "Páprica Doce 1 kg",
+			familySlug: "temperos-em-po",
+		});
+		expect(produto.slug).toBe("paprica-doce-1-kg");
+	});
+
+	it("coloca o produto novo no fim da lista", async () => {
+		// Com a posição padrão 0 ele empatava com o primeiro e aparecia antes
+		// do catálogo inteiro.
+		const produto = await criarNovoProduto(repos.products, {
+			name: "Hortelã",
+			familySlug: "chas",
+		});
+		expect(produto.position).toBe(2);
+
+		const lista = await listarProdutosDaFamilia(repos.products, "chas");
+		expect(lista.at(-1)?.slug).toBe("hortela");
+	});
+
+	it("recusa nome que deriva um slug já usado", async () => {
+		await expect(
+			criarNovoProduto(repos.products, {
+				name: "Camomila",
+				familySlug: "chas",
+			}),
+		).rejects.toThrow(/Já existe um produto com o slug "camomila"/);
+	});
+
+	it("deriva o slug e a posição da família", async () => {
+		const familia = await criarNovaFamilia(repos.products, {
+			name: "Molhos e Pastas",
+		});
+		expect(familia.slug).toBe("molhos-e-pastas");
+		expect(familia.position).toBe(2);
+	});
+});
+
 describe("família", () => {
 	it("recusa slug já ocupado", async () => {
 		await expect(
 			criarNovaFamilia(repos.products, { slug: "chas", name: "Chás" }),
 		).rejects.toThrow(ConflictError);
+	});
+
+	it("renomeia sem mexer no slug nem na posição", async () => {
+		const familia = await renomearFamilia(
+			repos.products,
+			"temperos-em-po",
+			"Temperos Secos",
+		);
+
+		expect(familia).toEqual({
+			slug: "temperos-em-po",
+			name: "Temperos Secos",
+			position: 1,
+		});
+	});
+
+	it("recusa renomear para vazio", async () => {
+		await expect(
+			renomearFamilia(repos.products, "chas", "   "),
+		).rejects.toThrow(InvalidInputError);
+	});
+
+	it("recusa remover família com produtos, dizendo quantos", async () => {
+		// O banco barra pela chave estrangeira, mas sem dizer o que fazer.
+		await expect(removerFamilia(repos.products, "chas")).rejects.toThrow(
+			/"Chás": 2 produtos ainda estão nesta família/,
+		);
+		await expect(removerFamilia(repos.products, "chas")).rejects.toThrow(
+			ConflictError,
+		);
+	});
+
+	it("remove família vazia", async () => {
+		await removerFamilia(repos.products, "temperos-em-po");
+
+		const familias = await listarFamiliasComContagem(repos.products);
+		expect(familias.map((f) => f.slug)).toEqual(["chas"]);
+	});
+
+	it("regrava a ordem inteira", async () => {
+		await reordenarFamilias(repos.products, ["temperos-em-po", "chas"]);
+
+		const familias = await listarFamiliasComContagem(repos.products);
+		expect(familias.map((f) => f.slug)).toEqual(["temperos-em-po", "chas"]);
+	});
+
+	it.each([
+		["parcial", ["chas"]],
+		["com repetição", ["chas", "chas"]],
+		["com slug desconhecido", ["chas", "fantasma"]],
+	])("recusa ordem %s sem gravar nada", async (_caso, ordem) => {
+		await expect(reordenarFamilias(repos.products, ordem)).rejects.toThrow(
+			InvalidInputError,
+		);
+
+		const familias = await listarFamiliasComContagem(repos.products);
+		expect(familias.map((f) => f.slug)).toEqual(["chas", "temperos-em-po"]);
 	});
 });
 
@@ -265,5 +366,92 @@ describe("receitas", () => {
 		await expect(obterReceita(repos.recipes, "fantasma")).rejects.toThrow(
 			NotFoundError,
 		);
+	});
+});
+
+describe("catálogo na forma do site", () => {
+	it("leva a contagem na família e o nome da família no produto", async () => {
+		const catalogo = await montarCatalogoPublicado(repos);
+
+		expect(catalogo.families).toEqual([
+			{ slug: "chas", name: "Chás", count: 2 },
+			{ slug: "temperos-em-po", name: "Temperos em Pó", count: 0 },
+		]);
+		expect(catalogo.products[0]).toEqual({
+			slug: "boldo",
+			name: "Boldo",
+			familySlug: "chas",
+			family: "Chás",
+			// Foto ausente vira texto vazio: é o que o retrato publicado guarda.
+			image: "",
+		});
+	});
+
+	it("deriva o tempo exibido dos minutos e ordena as receitas por slug", async () => {
+		const base = {
+			summary: "",
+			level: "Fácil" as const,
+			servings: 2,
+			category: "Lanches" as const,
+			ingredients: ["Água"],
+			steps: ["Ferver"],
+		};
+		await criarNovaReceita(repos, {
+			...base,
+			slug: "pao-de-ervas",
+			name: "Pão de Ervas",
+			minutes: 80,
+		});
+		await criarNovaReceita(repos, {
+			...base,
+			slug: "cha-gelado",
+			name: "Chá Gelado",
+			minutes: 10,
+			usedProductSlugs: ["camomila"],
+		});
+
+		const { recipes } = await montarCatalogoPublicado(repos);
+
+		expect(recipes.map((r) => [r.slug, r.time])).toEqual([
+			["cha-gelado", "10 min"],
+			["pao-de-ervas", "1 h 20 min"],
+		]);
+		expect(recipes[0]?.usedProductSlugs).toEqual(["camomila"]);
+	});
+
+	it("ordena por caractere, sem depender do idioma da máquina", async () => {
+		const base = {
+			summary: "",
+			minutes: 30,
+			level: "Fácil" as const,
+			servings: 2,
+			category: "Almoço" as const,
+			ingredients: ["Massa"],
+			steps: ["Cozinhar"],
+		};
+		// Com `localeCompare` em pt-BR o hífen é ignorado e a ordem inverte.
+		await criarNovaReceita(repos, {
+			...base,
+			slug: "macarrao-ao-molho",
+			name: "Macarrão ao Molho",
+		});
+		await criarNovaReceita(repos, {
+			...base,
+			slug: "macarrao-a-primavera",
+			name: "Macarrão à Primavera",
+		});
+
+		const { recipes } = await montarCatalogoPublicado(repos);
+		expect(recipes.map((r) => r.slug)).toEqual([
+			"macarrao-a-primavera",
+			"macarrao-ao-molho",
+		]);
+	});
+
+	it("reflete uma edição na leitura seguinte", async () => {
+		await atualizarProduto(repos.products, "boldo", { name: "Boldo do Chile" });
+
+		const { products } = await montarCatalogoPublicado(repos);
+		expect(products[0]?.name).toBe("Boldo do Chile");
 	});
 });

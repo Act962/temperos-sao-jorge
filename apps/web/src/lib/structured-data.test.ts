@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+import { CONTEUDO_PADRAO } from "@my-better-t-app/core";
+import { describe, expect, it } from "vitest";
 import { PRODUCTS } from "@/data/products";
 import { RECIPES } from "@/data/recipes";
 import { SITE } from "@/data/site";
@@ -11,8 +12,10 @@ import {
 	recipeSchema,
 } from "@/lib/structured-data";
 
+const CONFIGURACOES = CONTEUDO_PADRAO.settings;
+
 describe("organizationSchema", () => {
-	const org = organizationSchema();
+	const org = organizationSchema(CONFIGURACOES);
 
 	it("usa @id estável para as demais entidades referenciarem", () => {
 		expect(org["@id"]).toBe(`${SITE.url}/#organization`);
@@ -32,34 +35,40 @@ describe("organizationSchema", () => {
 
 describe("localBusinessSchema", () => {
 	it("não publica nada enquanto o endereço não for verificado", () => {
-		// Guarda deliberada: os dados de contato ainda são os de exemplo do
+		// Guarda deliberada: os dados de contato padrão são os de exemplo do
 		// design. Publicar endereço inventado como dado estruturado seria
 		// afirmar ao Google um fato falso.
-		expect(localBusinessSchema()).toBeUndefined();
+		expect(CONFIGURACOES.contact.hasVerifiedAddress).toBe(false);
+		expect(localBusinessSchema(CONFIGURACOES)).toBeUndefined();
+		expect(organizationSchema(CONFIGURACOES).address).toBeUndefined();
 	});
 
-	it("publica o endereço assim que a verificação for ligada", async () => {
-		vi.resetModules();
-		vi.doMock("@/data/site", async () => {
-			const real =
-				await vi.importActual<typeof import("@/data/site")>("@/data/site");
-			return {
-				...real,
-				CONTACT: { ...real.CONTACT, hasVerifiedAddress: true },
-			};
-		});
+	it("publica o endereço assim que alguém o confere no painel", () => {
+		const conferido = {
+			...CONFIGURACOES,
+			contact: {
+				...CONFIGURACOES.contact,
+				street: "Av. das Especiarias, 500",
+				hasVerifiedAddress: true,
+			},
+		};
+		const schema = localBusinessSchema(conferido);
 
-		const { localBusinessSchema: comEndereco } = await import(
-			"@/lib/structured-data"
-		);
-		const schema = comEndereco();
-
-		expect(schema).toBeDefined();
 		expect(schema?.["@type"]).toBe("FoodEstablishment");
-		expect(schema?.address).toMatchObject({ "@type": "PostalAddress" });
+		expect(schema?.address).toMatchObject({
+			"@type": "PostalAddress",
+			streetAddress: "Av. das Especiarias, 500",
+		});
+		expect(organizationSchema(conferido).address).toBeDefined();
+	});
 
-		vi.doUnmock("@/data/site");
-		vi.resetModules();
+	it("leva o telefone do painel no formato internacional", () => {
+		const schema = organizationSchema({
+			...CONFIGURACOES,
+			contact: { ...CONFIGURACOES.contact, phone: "(86) 99999-0000" },
+		});
+		const [ponto] = schema.contactPoint as Array<{ telephone: string }>;
+		expect(ponto?.telephone).toBe("+5586999990000");
 	});
 });
 

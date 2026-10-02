@@ -1,15 +1,18 @@
+import type { SiteSettings } from "@my-better-t-app/core";
 import type { Product } from "@/data/products";
 import type { Recipe } from "@/data/recipes";
-import { CONTACT, SITE, SOCIAL_LINKS } from "@/data/site";
+import { SITE } from "@/data/site";
 import { absoluteUrl, canonicalUrl } from "@/lib/seo";
+import { phoneE164 } from "@/lib/site-content";
 
 /**
  * schema.org payloads.
  *
  * Everything here is derived from data we actually hold. The postal address is
- * emitted only when `CONTACT.hasVerifiedAddress` is true — publishing a
+ * emitted only when `contact.hasVerifiedAddress` is true — publishing a
  * placeholder address as structured data would feed search engines a fact that
- * is not true.
+ * is not true. Contact data comes from the panel (Configurações), so the
+ * schemas that carry it take the settings as an argument.
  */
 
 type JsonLdValue = Record<string, unknown>;
@@ -25,20 +28,21 @@ export function jsonLdScript(data: JsonLdValue) {
 	};
 }
 
-function postalAddress(): JsonLdValue | undefined {
-	if (!CONTACT.hasVerifiedAddress) return undefined;
+function postalAddress(settings: SiteSettings): JsonLdValue | undefined {
+	const { contact } = settings;
+	if (!contact.hasVerifiedAddress) return undefined;
 	return {
 		"@type": "PostalAddress",
-		streetAddress: CONTACT.street,
-		addressLocality: CONTACT.city,
-		addressRegion: CONTACT.state,
-		postalCode: CONTACT.postalCode,
-		addressCountry: CONTACT.country,
+		streetAddress: contact.street,
+		addressLocality: contact.city,
+		addressRegion: contact.state,
+		postalCode: contact.postalCode,
+		addressCountry: SITE.country,
 	};
 }
 
-export function organizationSchema(): JsonLdValue {
-	const address = postalAddress();
+export function organizationSchema(settings: SiteSettings): JsonLdValue {
+	const address = postalAddress(settings);
 	return {
 		"@context": "https://schema.org",
 		"@type": "Organization",
@@ -48,15 +52,15 @@ export function organizationSchema(): JsonLdValue {
 		url: `${SITE.url}/`,
 		logo: absoluteUrl(SITE.logo),
 		image: absoluteUrl(SITE.ogImage),
-		description: SITE.description,
+		description: settings.description,
 		foundingDate: SITE.foundingYear,
-		sameAs: SOCIAL_LINKS.map((link) => link.href),
+		sameAs: settings.social.map((link) => link.href),
 		contactPoint: [
 			{
 				"@type": "ContactPoint",
 				contactType: "customer service",
-				telephone: CONTACT.phoneE164,
-				email: CONTACT.email,
+				telephone: phoneE164(settings.contact.phone),
+				email: settings.contact.email,
 				areaServed: "BR",
 				availableLanguage: ["Portuguese"],
 			},
@@ -168,8 +172,10 @@ export function recipeListSchema(
 }
 
 /** Emitted on the contact page only once a real address has been verified. */
-export function localBusinessSchema(): JsonLdValue | undefined {
-	const address = postalAddress();
+export function localBusinessSchema(
+	settings: SiteSettings,
+): JsonLdValue | undefined {
+	const address = postalAddress(settings);
 	if (!address) return undefined;
 	return {
 		"@context": "https://schema.org",
@@ -177,10 +183,13 @@ export function localBusinessSchema(): JsonLdValue | undefined {
 		name: SITE.name,
 		url: canonicalUrl("/contato"),
 		image: absoluteUrl(SITE.ogImage),
-		telephone: CONTACT.phoneE164,
-		email: CONTACT.email,
+		telephone: phoneE164(settings.contact.phone),
+		email: settings.contact.email,
 		address,
-		openingHours: CONTACT.openingHoursSpec,
+		// `openingHours` saiu: o schema.org pede uma sintaxe própria
+		// ("Mo-Fr 08:00-17:00"), e o horário agora é texto livre editado no
+		// painel. Publicar um horário que não bate com o texto seria pior que
+		// não publicar.
 		parentOrganization: { "@id": ORGANIZATION_ID },
 	};
 }

@@ -1,6 +1,10 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ProductCatalog } from "@/components/products/product-catalog";
-import { getFamilyBySlug, getProductsByFamily } from "@/data/products";
+import {
+	catalogQuery,
+	getFamilyBySlug,
+	getProductsByFamily,
+} from "@/lib/catalog";
 import { buildPageSeo } from "@/lib/seo";
 import {
 	breadcrumbSchema,
@@ -13,10 +17,11 @@ function familyDescription(name: string, count: number): string {
 }
 
 export const Route = createFileRoute("/produtos/$familia")({
-	loader: ({ params }) => {
-		const family = getFamilyBySlug(params.familia);
+	loader: async ({ context, params }) => {
+		const catalog = await context.queryClient.ensureQueryData(catalogQuery);
+		const family = getFamilyBySlug(catalog, params.familia);
 		if (!family) throw notFound();
-		return { family, products: getProductsByFamily(family.slug) };
+		return { family, products: getProductsByFamily(catalog, family.slug) };
 	},
 
 	head: ({ loaderData }) => {

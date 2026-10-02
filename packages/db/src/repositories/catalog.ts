@@ -17,6 +17,7 @@ import {
 	recipe,
 	recipeProduct,
 } from "../schema/catalog";
+import { DrizzleSiteContentRepository } from "./content";
 
 /**
  * Adaptadores Drizzle das portas definidas em `@my-better-t-app/core`.
@@ -95,6 +96,10 @@ export class DrizzleProductRepository implements ProductRepository {
 					updatedAt: new Date(),
 				},
 			});
+	}
+
+	async deleteFamily(slug: Slug): Promise<void> {
+		await this.db.delete(productFamily).where(eq(productFamily.slug, slug));
 	}
 
 	async list(): Promise<Product[]> {
@@ -252,5 +257,6 @@ export function repositoriosDrizzle(db: Database) {
 	return {
 		products: new DrizzleProductRepository(db),
 		recipes: new DrizzleRecipeRepository(db),
+		content: new DrizzleSiteContentRepository(db),
 	};
 }

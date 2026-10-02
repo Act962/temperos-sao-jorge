@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { shouldExpireCatalog } from "@/server/catalog-source";
 
 /**
  * tRPC servido pelo TanStack Start, no lugar do adaptador Hono.
@@ -14,12 +15,22 @@ async function handle(request: Request): Promise<Response> {
 			import("@my-better-t-app/api/context"),
 		]);
 
-	return fetchRequestHandler({
+	const resposta = await fetchRequestHandler({
 		endpoint: "/api/trpc",
 		req: request,
 		router: appRouter,
 		createContext: () => createContext({ request }),
 	});
+
+	// Toda mutação chega por POST. Expirar aqui, e não em cada procedimento,
+	// é o que impede uma mutação nova de esquecer de avisar o site: salvar no
+	// painel é publicar, e a visita seguinte tem que ler do banco.
+	if (shouldExpireCatalog(request.method, resposta.ok)) {
+		const { expireCatalog } = await import("@/server/catalog.server");
+		await expireCatalog();
+	}
+
+	return resposta;
 }
 
 export const Route = createFileRoute("/api/trpc/$")({

@@ -12,6 +12,7 @@ import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SITE } from "@/data/site";
+import { catalogQuery } from "@/lib/catalog";
 import {
 	jsonLdScript,
 	organizationSchema,
@@ -32,7 +33,13 @@ export interface RouterAppContext {
  * alongside every page's own and leave two conflicting canonicals in the head.
  */
 export const Route = createRootRouteWithContext<RouterAppContext>()({
-	head: () => ({
+	// O catálogo entra uma vez, na raiz: cabeçalho, rodapé e todas as páginas
+	// leem do mesmo cache de consulta, e o HTML do servidor sai completo sem
+	// nenhum componente suspender. As rotas filhas repetem o `ensureQueryData`
+	// quando precisam do dado no `head` — a segunda chamada só devolve o cache.
+	loader: ({ context }) => context.queryClient.ensureQueryData(catalogQuery),
+
+	head: ({ loaderData }) => ({
 		meta: [
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -70,7 +77,11 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 			},
 		],
 		scripts: [
-			jsonLdScript(organizationSchema()),
+			// Sem dado carregado — erro no loader — a Organization fica de fora:
+			// melhor nenhuma que uma com contato inventado.
+			...(loaderData
+				? [jsonLdScript(organizationSchema(loaderData.content.settings))]
+				: []),
 			jsonLdScript(webSiteSchema()),
 		],
 	}),
@@ -92,7 +103,9 @@ function RootDocument() {
 			<head>
 				<HeadContent />
 			</head>
-			<body>
+			{/* `data-painel` liga os ajustes de `index.css` para o admin. Fica no
+			    body porque diálogos e a gaveta saem em portal. */}
+			<body data-painel={noAdmin ? "" : undefined}>
 				{noAdmin ? null : (
 					<a
 						href="#conteudo"

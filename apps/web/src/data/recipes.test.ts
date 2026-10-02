@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PRODUCTS } from "@/data/products";
-import { filterRecipes, getRecipeBySlug, RECIPES } from "@/data/recipes";
+import { getRecipeBySlug, RECIPES } from "@/data/recipes";
+import { filterRecipes } from "@/lib/recipe-filters";
 
 describe("receitas", () => {
 	it("não repete slug", () => {

@@ -1,5 +1,4 @@
-import { PRODUCT_FAMILIES } from "@/data/products";
-import { RECIPES } from "@/data/recipes";
+import type { Catalog } from "@/lib/catalog";
 
 /**
  * Every indexable URL on the site, in one place. The sitemap is generated from
@@ -24,15 +23,21 @@ const STATIC_ROUTES: readonly SiteRoute[] = [
 	{ path: "/cookies", changeFrequency: "yearly", priority: 0.2 },
 ];
 
-export function getSiteRoutes(): readonly SiteRoute[] {
+/**
+ * Recebe o catálogo em vez de importá-lo: uma receita criada no painel entra
+ * no sitemap na leitura seguinte, sem novo build.
+ */
+export function getSiteRoutes(
+	catalog: Pick<Catalog, "families" | "recipes">,
+): readonly SiteRoute[] {
 	return [
 		...STATIC_ROUTES,
-		...PRODUCT_FAMILIES.map<SiteRoute>((family) => ({
+		...catalog.families.map<SiteRoute>((family) => ({
 			path: `/produtos/${family.slug}`,
 			changeFrequency: "weekly",
 			priority: 0.8,
 		})),
-		...RECIPES.map<SiteRoute>((recipe) => ({
+		...catalog.recipes.map<SiteRoute>((recipe) => ({
 			path: `/receitas/${recipe.slug}`,
 			changeFrequency: "monthly",
 			priority: 0.7,

@@ -130,6 +130,78 @@
 	}
 }
 
+/* ---------------------------------------------------------------------------
+ * Painel de administração
+ *
+ * Os primitivos shadcn vêm compactos e neutros (botão de 32 px, canto reto,
+ * primário quase preto), e não se editam à mão. Em vez de repetir `className`
+ * em cada uso, o painel os ajusta daqui: alvos de toque maiores e as cores da
+ * marca. O seletor é o `<body>` e não a moldura porque diálogo e gaveta saem
+ * em portal, fora dela.
+ *
+ * Fora de `@layer` de propósito: é o que faz estas regras vencerem os
+ * utilitários do Tailwind sem `!important`.
+ * ------------------------------------------------------------------------- */
+[data-painel] {
+	--background: var(--color-cream-bright);
+	--foreground: var(--color-ink);
+	--popover: var(--color-cream-bright);
+	--popover-foreground: var(--color-ink);
+	--primary: var(--color-brand);
+	--primary-foreground: #fff;
+	--secondary: color-mix(in srgb, var(--color-brand) 9%, transparent);
+	--secondary-foreground: var(--color-brand);
+	--muted: color-mix(in srgb, var(--color-brand) 7%, transparent);
+	--muted-foreground: var(--color-ink-faint);
+	--border: color-mix(in srgb, var(--color-ink) 18%, transparent);
+	--input: color-mix(in srgb, var(--color-ink) 22%, transparent);
+	--ring: var(--color-brand);
+	--destructive: var(--color-brand-bright);
+}
+
+[data-painel] [data-slot="button"] {
+	min-width: 2.25rem;
+	min-height: 2.25rem;
+	border-radius: 0.4375rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+}
+
+[data-painel] [data-slot="input"],
+[data-painel] [data-slot="textarea"],
+[data-painel] select {
+	min-height: 2.5rem;
+	border-radius: 0.4375rem;
+	background-color: var(--color-cream-bright);
+	font-size: 0.875rem;
+}
+
+[data-painel] [data-slot="label"] {
+	color: var(--color-ink-soft);
+	font-size: 0.8125rem;
+	font-weight: 600;
+}
+
+[data-painel] [data-slot="dialog-content"],
+[data-painel] [data-slot="alert-dialog-content"] {
+	border-radius: 0.75rem;
+}
+
+/* No celular o dedo precisa de 44 px, e 16 px no campo evita o zoom do iOS. */
+@media (max-width: 767px) {
+	[data-painel] [data-slot="button"] {
+		min-width: 2.75rem;
+		min-height: 2.75rem;
+	}
+
+	[data-painel] [data-slot="input"],
+	[data-painel] [data-slot="textarea"],
+	[data-painel] select {
+		min-height: 2.75rem;
+		font-size: 1rem;
+	}
+}
+
 /* Entrance animations used by the hero and the scroll reveal helper. */
 @keyframes brand-rise {
 	from {

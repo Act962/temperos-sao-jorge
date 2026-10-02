@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProductCatalog } from "@/components/products/product-catalog";
-import { PRODUCTS } from "@/data/products";
+import { catalogQuery, useCatalog } from "@/lib/catalog";
 import { buildPageSeo } from "@/lib/seo";
 import {
 	breadcrumbSchema,
@@ -12,7 +12,9 @@ const DESCRIPTION =
 	"Conheça o catálogo completo da São Jorge Alimentos: temperos em pó e líquidos, chás, ervas e especiarias, molhos, farinhas naturais, sementes e grãos.";
 
 export const Route = createFileRoute("/produtos/")({
-	head: () => {
+	loader: ({ context }) => context.queryClient.ensureQueryData(catalogQuery),
+
+	head: ({ loaderData }) => {
 		const seo = buildPageSeo({
 			title: "Nossos produtos",
 			description: DESCRIPTION,
@@ -28,7 +30,9 @@ export const Route = createFileRoute("/produtos/")({
 						{ name: "Produtos", path: "/produtos" },
 					]),
 				),
-				jsonLdScript(productListSchema(PRODUCTS, "/produtos")),
+				jsonLdScript(
+					productListSchema(loaderData?.products ?? [], "/produtos"),
+				),
 			],
 		};
 	},
@@ -36,11 +40,13 @@ export const Route = createFileRoute("/produtos/")({
 });
 
 function ProductsPage() {
+	const { products } = useCatalog();
+
 	return (
 		<ProductCatalog
 			title="Nossos produtos"
 			description="Qualidade, sabor e variedade para o seu dia a dia."
-			products={PRODUCTS}
+			products={products}
 			activeFamilySlug={null}
 		/>
 	);

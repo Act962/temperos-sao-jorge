@@ -6,8 +6,8 @@ import { BrandLogo } from "@/components/layout/brand-logo";
 import { ProductsMegaMenu } from "@/components/layout/products-mega-menu";
 import { BrandLink } from "@/components/ui/brand-button";
 import { WhatsappIcon } from "@/components/ui/whatsapp-icon";
-import { PRODUCT_FAMILIES } from "@/data/products";
-import { whatsappUrl } from "@/data/site";
+import { useCatalog } from "@/lib/catalog";
+import { whatsappUrl } from "@/lib/site-content";
 
 const NAV_LINKS = [
 	{ label: "Sobre", to: "/sobre" },
@@ -17,10 +17,11 @@ const NAV_LINKS = [
 
 /** Sticky site header: brand mark, primary navigation and the contact CTA. */
 export function SiteHeader() {
+	const { families, content } = useCatalog();
 	const [megaMenuOpen, setMegaMenuOpen] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const mobileNavId = useId();
-	const whatsapp = whatsappUrl();
+	const whatsapp = whatsappUrl(content.settings);
 
 	// Never leave the mobile drawer open behind a locked body scroll.
 	useEffect(() => {
@@ -174,7 +175,7 @@ export function SiteHeader() {
 						Produtos
 					</Link>
 					<ul className="mb-2 flex flex-col border-brand/10 border-b pb-3 pl-3">
-						{PRODUCT_FAMILIES.map((family) => (
+						{families.map((family) => (
 							<li key={family.slug}>
 								<Link
 									to="/produtos/$familia"

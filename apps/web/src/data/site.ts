@@ -1,11 +1,12 @@
 /**
- * Single source of truth for brand identity, contact details and SEO defaults.
+ * Identidade técnica da marca: o que não se edita pelo painel.
  *
- * NOTE: the contact block below still carries the placeholder values that came
- * from the design canvas. Replace them with the real ones before launch — they
- * feed the contact page, the footer and the JSON-LD emitted for search engines.
- * `hasVerifiedAddress` gates the LocalBusiness structured data so we never
- * publish a fabricated postal address to Google.
+ * Contato, WhatsApp, redes sociais e os textos das páginas saíram daqui na
+ * spec 0008 — moram no banco, com o padrão em `@my-better-t-app/core`, e
+ * chegam aos componentes por `useSiteContent()`.
+ *
+ * Nome e slogan ficam porque estão no logotipo e em dezenas de textos
+ * alternativos: mudar um sem os outros deixaria o site incoerente.
  */
 
 import { env } from "@my-better-t-app/env/web";
@@ -21,10 +22,9 @@ export const SITE = {
 	url: resolveSiteUrl(),
 	locale: "pt_BR",
 	lang: "pt-BR",
+	country: "BR",
 	foundingYear: "1980",
 	tagline: "Mais sabor em sua mesa",
-	description:
-		"Há mais de 40 anos a São Jorge Alimentos leva temperos, chás, ervas, molhos e grãos de qualidade para a mesa das famílias brasileiras.",
 	logo: "/images/logo-sao-jorge.png",
 	/**
 	 * Share card. Points at the hero photo so links preview correctly today —
@@ -32,69 +32,3 @@ export const SITE = {
 	 */
 	ogImage: "/images/hero.webp",
 } as const;
-
-export const CONTACT = {
-	/** Flip to true only once the address below is the real, verified one. */
-	hasVerifiedAddress: false,
-	phone: "(11) 3000-0000",
-	phoneE164: "+551130000000",
-	email: "sac@saojorgealimentos.com.br",
-	street: "Rua das Indústrias, 123",
-	district: "Bairro Industrial",
-	city: "São Paulo",
-	state: "SP",
-	postalCode: "00000-000",
-	country: "BR",
-	openingHours: "Segunda a sexta, 8h às 17h",
-	/** schema.org openingHours syntax, mirrors `openingHours` above. */
-	openingHoursSpec: "Mo-Fr 08:00-17:00",
-	/**
-	 * WhatsApp de atendimento. `number` é o formato do wa.me: código do país,
-	 * DDD e número, só dígitos. Deixe vazio para esconder o botão em vez de
-	 * apontar para um número que não atende.
-	 */
-	whatsapp: {
-		number: "5511300000000",
-		display: "(11) 3000-0000",
-		/** Texto que já vem preenchido na conversa. */
-		message: "Olá! Vim pelo site da São Jorge Alimentos.",
-	},
-} as const;
-
-/** Link pronto do WhatsApp, ou null quando não há número configurado. */
-export function whatsappUrl(): string | null {
-	const { number, message } = CONTACT.whatsapp;
-	if (!number) return null;
-	return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
-}
-
-/**
- * Perfis oficiais. Além dos botões do rodapé, esta lista alimenta o `sameAs` do
- * JSON-LD de Organization — é por ela que o Google associa o site aos perfis.
- *
- * Só entram perfis que existem: um link para a raiz da plataforma leva o
- * visitante para lugar nenhum e enfraquece o `sameAs`. O ícone do YouTube segue
- * registrado em `social-links.tsx`, então basta acrescentar a entrada aqui
- * quando o canal existir.
- */
-export const SOCIAL_LINKS = [
-	{
-		name: "Instagram",
-		href: "https://www.instagram.com/saojorgealimentos/",
-		icon: "instagram",
-	},
-	{
-		name: "Facebook",
-		href: "https://www.facebook.com/profile.php?id=100009943276651",
-		icon: "facebook",
-	},
-] as const;
-
-export const CONTACT_SUBJECTS = [
-	"Atendimento ao consumidor",
-	"Quero ser distribuidor",
-	"Trabalhe conosco",
-	"Imprensa",
-] as const;
-
-export type SocialLink = (typeof SOCIAL_LINKS)[number];

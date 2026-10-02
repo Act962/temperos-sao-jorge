@@ -38,6 +38,14 @@ jobs:
       - name: Formato e lint
         run: pnpm exec biome ci .
 
+      # Antes dos tipos, e não depois: é o build que gera
+      # `apps/web/src/routeTree.gen.ts`, que fica fora do Git. Num checkout
+      # limpo, conferir os tipos primeiro falha em toda rota com "Cannot find
+      # module './routeTree.gen'". Na máquina de quem já construiu uma vez o
+      # arquivo existe, e a ordem errada passa despercebida.
+      - name: Build
+        run: pnpm --filter web build
+
       - name: Tipos
         run: pnpm run check-types
 
@@ -46,9 +54,6 @@ jobs:
       # então o job não precisa de Postgres.
       - name: Testes unitários e de integração
         run: pnpm run test
-
-      - name: Build
-        run: pnpm --filter web build
 
   e2e:
     name: End-to-end

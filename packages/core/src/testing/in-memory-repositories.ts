@@ -1,11 +1,13 @@
 import type { Product, ProductFamily } from "../domain/product";
 import type { Recipe } from "../domain/recipe";
+import type { ChaveDeConteudo } from "../domain/site-content";
 import type { Slug } from "../domain/slug";
 import type {
 	CatalogRepositories,
 	ProductRepository,
 	RecipeRepository,
 } from "../ports/catalog-repository";
+import type { SiteContentRepository } from "../ports/site-content-repository";
 
 /**
  * Adaptadores em memória.
@@ -42,6 +44,10 @@ export class InMemoryProductRepository implements ProductRepository {
 
 	async saveFamily(family: ProductFamily): Promise<void> {
 		this.families.set(family.slug, family);
+	}
+
+	async deleteFamily(slug: Slug): Promise<void> {
+		this.families.delete(slug);
 	}
 
 	async list(): Promise<Product[]> {
@@ -97,13 +103,35 @@ export class InMemoryRecipeRepository implements RecipeRepository {
 	}
 }
 
+export class InMemorySiteContentRepository implements SiteContentRepository {
+	private readonly documentos = new Map<ChaveDeConteudo, unknown>();
+
+	constructor(dados?: Partial<Record<ChaveDeConteudo, unknown>>) {
+		for (const [chave, documento] of Object.entries(dados ?? {})) {
+			this.documentos.set(chave as ChaveDeConteudo, documento);
+		}
+	}
+
+	async findAll(): Promise<Partial<Record<ChaveDeConteudo, unknown>>> {
+		return Object.fromEntries(this.documentos);
+	}
+
+	async save(chave: ChaveDeConteudo, documento: unknown): Promise<void> {
+		// Ida e volta por JSON, como o banco faz: um teste que alterasse o
+		// objeto depois de salvar não pode mudar o que foi gravado.
+		this.documentos.set(chave, JSON.parse(JSON.stringify(documento)));
+	}
+}
+
 export function repositoriosEmMemoria(dados?: {
 	families?: readonly ProductFamily[];
 	products?: readonly Product[];
 	recipes?: readonly Recipe[];
+	content?: Partial<Record<ChaveDeConteudo, unknown>>;
 }): CatalogRepositories {
 	return {
 		products: new InMemoryProductRepository(dados),
 		recipes: new InMemoryRecipeRepository(dados?.recipes),
+		content: new InMemorySiteContentRepository(dados?.content),
 	};
 }

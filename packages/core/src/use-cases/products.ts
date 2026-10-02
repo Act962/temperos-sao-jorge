@@ -1,4 +1,8 @@
-import { ConflictError, NotFoundError } from "../domain/errors";
+import {
+	ConflictError,
+	InvalidInputError,
+	NotFoundError,
+} from "../domain/errors";
 import {
 	criarFamilia,
 	criarProduto,
@@ -6,7 +10,7 @@ import {
 	type Product,
 	type ProductFamily,
 } from "../domain/product";
-import { comoSlug, type Slug } from "../domain/slug";
+import { comoSlug, paraSlug, type Slug } from "../domain/slug";
 import type {
 	CatalogRepositories,
 	ProductRepository,
@@ -57,11 +61,27 @@ export async function obterProduto(
 	return produto;
 }
 
+/** Um a mais que a maior posição: quem chega por último entra no fim. */
+function proximaPosicao(itens: readonly { position: number }[]): number {
+	return itens.reduce((maior, item) => Math.max(maior, item.position), -1) + 1;
+}
+
+/**
+ * Cria um produto.
+ *
+ * Slug e posição são opcionais porque quem cadastra pelo painel não tem como
+ * saber nenhum dos dois: o slug sai do nome, e o produto entra no fim da
+ * lista. Com a posição padrão 0 ele aparecia antes de todo o catálogo.
+ */
 export async function criarNovoProduto(
 	repo: ProductRepository,
-	entrada: NovoProduto,
+	entrada: Omit<NovoProduto, "slug"> & { slug?: string },
 ): Promise<Product> {
-	const produto = criarProduto(entrada);
+	const produto = criarProduto({
+		...entrada,
+		slug: entrada.slug ?? paraSlug(entrada.name),
+		position: entrada.position ?? proximaPosicao(await repo.list()),
+	});
 
 	if (await repo.find(produto.slug)) {
 		throw new ConflictError(
@@ -135,9 +155,13 @@ export async function removerProduto(
 
 export async function criarNovaFamilia(
 	repo: ProductRepository,
-	entrada: { slug: string; name: string; position?: number },
+	entrada: { slug?: string; name: string; position?: number },
 ): Promise<ProductFamily> {
-	const familia = criarFamilia(entrada);
+	const familia = criarFamilia({
+		...entrada,
+		slug: entrada.slug ?? paraSlug(entrada.name),
+		position: entrada.position ?? proximaPosicao(await repo.listFamilies()),
+	});
 
 	if (await repo.findFamily(familia.slug)) {
 		throw new ConflictError(
@@ -147,6 +171,92 @@ export async function criarNovaFamilia(
 
 	await repo.saveFamily(familia);
 	return familia;
+}
+
+export async function obterFamilia(
+	repo: ProductRepository,
+	slug: string,
+): Promise<ProductFamily> {
+	const familia = await repo.findFamily(comoSlug(slug));
+	if (!familia) throw new NotFoundError("Família", slug);
+	return familia;
+}
+
+/**
+ * Renomeia uma família.
+ *
+ * Só o nome muda. O slug é a URL `/produtos/<familia>` e a pasta dos
+ * packshots: trocá-lo quebraria os links publicados e a foto de cada produto.
+ */
+export async function renomearFamilia(
+	repo: ProductRepository,
+	slug: string,
+	name: string,
+): Promise<ProductFamily> {
+	const atual = await obterFamilia(repo, slug);
+	const renomeada = criarFamilia({ ...atual, name });
+	await repo.saveFamily(renomeada);
+	return renomeada;
+}
+
+/**
+ * Remove uma família vazia.
+ *
+ * O banco já recusa pela chave estrangeira, mas com um erro ilegível — e a
+ * regra sumiria dos testes em memória. Aqui a recusa diz quantos produtos
+ * ainda precisam de outro destino.
+ */
+export async function removerFamilia(
+	repo: ProductRepository,
+	slug: string,
+): Promise<void> {
+	const familia = await obterFamilia(repo, slug);
+
+	const produtos = await repo.listByFamily(familia.slug);
+	if (produtos.length > 0) {
+		throw new ConflictError(
+			produtos.length === 1
+				? `Não dá para remover "${familia.name}": 1 produto ainda está nesta família.`
+				: `Não dá para remover "${familia.name}": ${produtos.length} produtos ainda estão nesta família.`,
+		);
+	}
+
+	await repo.deleteFamily(familia.slug);
+}
+
+/**
+ * Regrava a ordem das famílias.
+ *
+ * Recebe a lista inteira, na ordem desejada. Uma lista parcial deixaria
+ * posições repetidas, e a ordem no site passaria a depender do banco.
+ */
+export async function reordenarFamilias(
+	repo: ProductRepository,
+	ordem: readonly string[],
+): Promise<ProductFamily[]> {
+	const familias = await repo.listFamilies();
+	const porSlug = new Map<string, ProductFamily>(
+		familias.map((familia) => [familia.slug, familia]),
+	);
+
+	const reordenadas = ordem.flatMap((slug, position) => {
+		const familia = porSlug.get(slug);
+		return familia ? [{ ...familia, position }] : [];
+	});
+
+	const confere =
+		reordenadas.length === familias.length &&
+		ordem.length === familias.length &&
+		new Set(ordem).size === ordem.length;
+
+	if (!confere) {
+		throw new InvalidInputError(
+			"A nova ordem precisa conter todas as famílias, uma vez cada.",
+		);
+	}
+
+	for (const familia of reordenadas) await repo.saveFamily(familia);
+	return reordenadas;
 }
 
 export interface FamiliaComContagem extends ProductFamily {

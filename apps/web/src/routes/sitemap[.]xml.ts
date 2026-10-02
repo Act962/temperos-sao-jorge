@@ -3,10 +3,10 @@ import { canonicalUrl } from "@/lib/seo";
 import { getSiteRoutes } from "@/lib/site-routes";
 
 /** XML sitemap, generated from the route registry in `lib/site-routes`. */
-function renderSitemap(): string {
+function renderSitemap(catalog: Parameters<typeof getSiteRoutes>[0]): string {
 	const lastModified = new Date().toISOString().slice(0, 10);
 
-	const urls = getSiteRoutes()
+	const urls = getSiteRoutes(catalog)
 		.map(
 			(route) =>
 				"  <url>\n" +
@@ -24,13 +24,22 @@ function renderSitemap(): string {
 export const Route = createFileRoute("/sitemap.xml")({
 	server: {
 		handlers: {
-			GET: () =>
-				new Response(renderSitemap(), {
+			GET: async () => {
+				// Import dinâmico pelo mesmo motivo das rotas de API: o módulo do
+				// catálogo alcança o banco, e isso não pode entrar no boot do site.
+				const { loadCatalog } = await import("@/server/catalog.server");
+
+				return new Response(renderSitemap(await loadCatalog()), {
 					headers: {
 						"content-type": "application/xml; charset=utf-8",
-						"cache-control": "public, max-age=3600",
+						// Sem prazo no navegador nem no CDN: o sitemap sai do mesmo
+						// cache do catálogo, que é expirado quando o painel grava. Com
+						// uma hora de `max-age`, uma receita nova ficaria fora dele
+						// mesmo com o catálogo já atualizado — e gerar de novo é barato.
+						"cache-control": "public, max-age=0, must-revalidate",
 					},
-				}),
+				});
+			},
 		},
 	},
 });

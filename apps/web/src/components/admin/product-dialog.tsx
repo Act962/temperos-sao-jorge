@@ -12,7 +12,8 @@ import { Label } from "@my-better-t-app/ui/components/label";
 import { useId, useState } from "react";
 
 export interface ProdutoFormulario {
-	slug: string;
+	/** Ausente ao criar: o domínio deriva do nome. */
+	slug?: string;
 	name: string;
 	familySlug: string;
 	image: string;
@@ -23,6 +24,8 @@ interface ProductDialogProps {
 	aoFechar: () => void;
 	/** Ausente ao criar; presente ao editar. */
 	inicial?: ProdutoFormulario;
+	/** Família que já vem escolhida ao criar a partir de uma lista filtrada. */
+	familiaSugerida?: string;
 	familias: readonly { slug: string; name: string }[];
 	enviando: boolean;
 	erro: string | null;
@@ -35,36 +38,40 @@ interface ProductDialogProps {
  * Não valida packshot nem slug aqui: quem decide é o domínio, e o erro dele
  * aparece no lugar da mensagem. Duplicar a regra na tela criaria uma segunda
  * verdade para manter em sincronia.
+ *
+ * O slug não é perguntado: quem cadastra um produto pensa no nome, e o
+ * identificador sai dele em `criarNovoProduto`.
  */
 export function ProductDialog({
 	aberto,
 	aoFechar,
 	inicial,
+	familiaSugerida,
 	familias,
 	enviando,
 	erro,
 	aoSalvar,
 }: ProductDialogProps) {
 	const ids = {
-		slug: useId(),
 		name: useId(),
 		familia: useId(),
 		image: useId(),
+		ajudaImagem: useId(),
 	};
 	const editando = inicial !== undefined;
 	const [familia, setFamilia] = useState(
-		inicial?.familySlug ?? familias[0]?.slug ?? "",
+		inicial?.familySlug ?? familiaSugerida ?? familias[0]?.slug ?? "",
 	);
 
 	return (
 		<Dialog open={aberto} onOpenChange={(estado) => !estado && aoFechar()}>
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto p-5 sm:max-w-md">
 				<form
 					onSubmit={(evento) => {
 						evento.preventDefault();
 						const dados = new FormData(evento.currentTarget);
 						aoSalvar({
-							slug: String(dados.get("slug") ?? "").trim(),
+							slug: inicial?.slug,
 							name: String(dados.get("name") ?? "").trim(),
 							familySlug: familia,
 							image: String(dados.get("image") ?? "").trim(),
@@ -72,32 +79,17 @@ export function ProductDialog({
 					}}
 				>
 					<DialogHeader>
-						<DialogTitle>
+						<DialogTitle className="font-sans font-semibold text-base text-ink">
 							{editando ? "Editar produto" : "Novo produto"}
 						</DialogTitle>
-						<DialogDescription>
-							O packshot segue o padrão do pipeline de imagens.
+						<DialogDescription className="font-sans text-ink-muted text-sm">
+							{editando
+								? "O que você salvar aqui vale para o catálogo inteiro."
+								: "Ele entra no fim da lista da família escolhida."}
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className="my-6 flex flex-col gap-4">
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor={ids.slug}>Slug</Label>
-							<Input
-								id={ids.slug}
-								name="slug"
-								defaultValue={inicial?.slug}
-								readOnly={editando}
-								required
-								placeholder="paprica-doce"
-							/>
-							{editando ? (
-								<p className="font-sans text-ink-faint text-xs">
-									O slug é a URL do produto e não muda depois de criado.
-								</p>
-							) : null}
-						</div>
-
+					<div className="my-5 flex flex-col gap-4">
 						<div className="flex flex-col gap-1.5">
 							<Label htmlFor={ids.name}>Nome</Label>
 							<Input
@@ -105,6 +97,7 @@ export function ProductDialog({
 								name="name"
 								defaultValue={inicial?.name}
 								required
+								autoComplete="off"
 								placeholder="Páprica Doce"
 							/>
 						</div>
@@ -115,7 +108,7 @@ export function ProductDialog({
 								id={ids.familia}
 								value={familia}
 								onChange={(evento) => setFamilia(evento.target.value)}
-								className="h-9 rounded-md border border-input bg-transparent px-3 font-sans text-sm"
+								className="border border-input px-3 font-sans"
 							>
 								{familias.map((item) => (
 									<option key={item.slug} value={item.slug}>
@@ -126,15 +119,21 @@ export function ProductDialog({
 						</div>
 
 						<div className="flex flex-col gap-1.5">
-							<Label htmlFor={ids.image}>Packshot</Label>
+							<Label htmlFor={ids.image}>Foto do produto</Label>
 							<Input
 								id={ids.image}
 								name="image"
 								defaultValue={inicial?.image}
+								aria-describedby={ids.ajudaImagem}
+								autoComplete="off"
 								placeholder="/images/products/temperos-em-po/sachet-paprica-doce.webp"
 							/>
-							<p className="font-sans text-ink-faint text-xs">
-								Deixe vazio enquanto a foto não existir.
+							<p
+								id={ids.ajudaImagem}
+								className="font-sans text-ink-faint text-xs"
+							>
+								Caminho do arquivo da foto. Deixe vazio enquanto ela não existir
+								— o envio de fotos pelo painel chega numa próxima etapa.
 							</p>
 						</div>
 

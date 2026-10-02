@@ -1,6 +1,6 @@
 # 0001 — Catálogo no Postgres com publicação estática
 
-- **Estado:** implementada
+- **Estado:** implementada — substituída em parte pela [0007](0007-conteudo-em-tempo-real.md): o site passou a ler o banco, e a publicação virou a reserva
 - **Data:** 2026-09-02
 
 ## Problema

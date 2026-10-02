@@ -12,8 +12,11 @@ import {
 	NIVEIS,
 	obterProduto,
 	obterReceita,
+	removerFamilia,
 	removerProduto,
 	removerReceita,
+	renomearFamilia,
+	reordenarFamilias,
 } from "@my-better-t-app/core";
 import { z } from "zod";
 import { traduzindoErros } from "../errors";
@@ -69,6 +72,10 @@ export const catalogRouter = router({
 				produtos: produtos.length,
 				receitas: receitas.length,
 				porFamilia: familias,
+				// O site mostra um espaço reservado no lugar da foto que falta; a
+				// visão geral aponta quantos ainda estão assim.
+				produtosSemFoto: produtos.filter((p) => p.image === null).length,
+				receitasSemFoto: receitas.filter((r) => r.image === null).length,
 			};
 		}),
 	),
@@ -81,13 +88,39 @@ export const catalogRouter = router({
 		criar: protectedProcedure
 			.input(
 				z.object({
-					slug,
+					// Opcional: o painel só pergunta o nome, e o slug sai dele.
+					slug: slug.optional(),
 					name: z.string().min(1),
 					position: z.number().int().optional(),
 				}),
 			)
 			.mutation(({ ctx, input }) =>
 				traduzindoErros(() => criarNovaFamilia(ctx.repos.products, input)),
+			),
+
+		renomear: protectedProcedure
+			.input(z.object({ slug, name: z.string().min(1) }))
+			.mutation(({ ctx, input }) =>
+				traduzindoErros(() =>
+					renomearFamilia(ctx.repos.products, input.slug, input.name),
+				),
+			),
+
+		reordenar: protectedProcedure
+			.input(z.object({ ordem: z.array(slug) }))
+			.mutation(({ ctx, input }) =>
+				traduzindoErros(() =>
+					reordenarFamilias(ctx.repos.products, input.ordem),
+				),
+			),
+
+		remover: protectedProcedure
+			.input(z.object({ slug }))
+			.mutation(({ ctx, input }) =>
+				traduzindoErros(async () => {
+					await removerFamilia(ctx.repos.products, input.slug);
+					return { slug: input.slug };
+				}),
 			),
 	}),
 
@@ -109,7 +142,7 @@ export const catalogRouter = router({
 			),
 
 		criar: protectedProcedure
-			.input(z.object({ slug, ...produtoEntrada }))
+			.input(z.object({ slug: slug.optional(), ...produtoEntrada }))
 			.mutation(({ ctx, input }) =>
 				traduzindoErros(() => criarNovoProduto(ctx.repos.products, input)),
 			),

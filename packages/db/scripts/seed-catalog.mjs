@@ -32,6 +32,17 @@ async function lerArray(arquivo, exportName) {
 	return new Function(`return ${match[1]}`)();
 }
 
+/** Os documentos de conteúdo da reserva, como linhas da tabela. */
+async function lerConteudo() {
+	const fonte = await readFile(path.join(DATA, "content.ts"), "utf8");
+	const match = fonte.match(
+		/export const PUBLISHED_CONTENT[^=]*=\s*(\{[\s\S]*\})\s*;/,
+	);
+	if (!match) throw new Error("Não achei PUBLISHED_CONTENT em content.ts");
+	const documentos = new Function(`return ${match[1]}`)();
+	return Object.entries(documentos).map(([key, data]) => ({ key, data }));
+}
+
 async function main() {
 	const dryRun = process.argv.includes("--dry-run");
 	const url = process.env.DATABASE_URL;
@@ -43,9 +54,10 @@ async function main() {
 	const familias = await lerArray("products.ts", "PRODUCT_FAMILIES");
 	const produtos = await lerArray("products.ts", "PRODUCTS");
 	const receitas = await lerArray("recipes.ts", "RECIPES");
+	const conteudo = await lerConteudo();
 
 	console.log(
-		`origem: ${familias.length} famílias, ${produtos.length} produtos, ${receitas.length} receitas`,
+		`origem: ${familias.length} famílias, ${produtos.length} produtos, ${receitas.length} receitas, ${conteudo.length} documentos de conteúdo`,
 	);
 
 	if (dryRun) {
@@ -56,6 +68,7 @@ async function main() {
 	const { productFamily, product, recipe, recipeProduct } = await import(
 		"../src/schema/catalog.ts"
 	);
+	const { siteContent } = await import("../src/schema/content.ts");
 	const db = drizzle(url);
 
 	await db.transaction(async (tx) => {
@@ -106,6 +119,11 @@ async function main() {
 			})),
 		);
 		if (vinculos.length > 0) await tx.insert(recipeProduct).values(vinculos);
+
+		// O conteúdo editável volta ao que a reserva guarda. Sem nenhum
+		// documento publicado a tabela fica vazia, e o site mostra o padrão.
+		await tx.delete(siteContent);
+		if (conteudo.length > 0) await tx.insert(siteContent).values(conteudo);
 	});
 
 	console.log("catálogo carregado no Postgres");
